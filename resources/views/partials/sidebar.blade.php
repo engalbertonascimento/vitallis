@@ -49,14 +49,17 @@
 
         {{-- Pacientes --}}
         @if($user->hasPermission('patients.view'))
-
+        
             <a
-                href="#"
-                class="flex items-center rounded-lg px-4 py-3 text-sm text-emerald-50 transition hover:bg-emerald-700"
+                href="{{ route('patients.index') }}"
+                class="flex items-center rounded-lg px-4 py-3 text-sm transition
+                    {{ request()->routeIs('patients.*')
+                        ? 'bg-emerald-700 font-medium text-white'
+                        : 'text-emerald-50 hover:bg-emerald-700' }}"
             >
                 Pacientes
             </a>
-
+        
         @endif
 
 

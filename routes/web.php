@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PatientController;
 
 
 /*
@@ -179,4 +180,102 @@ Route::middleware([
     Route::patch('/usuarios/{user}/status', [UserController::class, 'toggleStatus'])
         ->name('users.toggle-status');
 
+});
+/*
+|--------------------------------------------------------------------------
+| Pacientes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:patients.view',
+])->group(function () {
+
+    Route::get('/pacientes', [PatientController::class, 'index'])
+        ->name('patients.index');
+
+    Route::get('/pacientes/{patient}', [PatientController::class, 'show'])
+        ->name('patients.show');
+});
+
+Route::middleware([
+    'auth',
+    'permission:patients.create',
+])->group(function () {
+
+    Route::get('/pacientes/novo', [PatientController::class, 'create'])
+        ->name('patients.create');
+
+    Route::post('/pacientes', [PatientController::class, 'store'])
+        ->name('patients.store');
+});
+
+Route::middleware([
+    'auth',
+    'permission:patients.update',
+])->group(function () {
+
+    Route::get('/pacientes/{patient}/editar', [PatientController::class, 'edit'])
+        ->name('patients.edit');
+
+    Route::put('/pacientes/{patient}', [PatientController::class, 'update'])
+        ->name('patients.update');
+
+    Route::patch('/pacientes/{patient}/status', [PatientController::class, 'toggleStatus'])
+        ->name('patients.toggle-status');
+});
+
+/*
+| Cadastro
+*/
+Route::middleware([
+    'auth',
+    'permission:patients.create',
+])->group(function () {
+
+    Route::get('/pacientes/novo', [PatientController::class, 'create'])
+        ->name('patients.create');
+
+    Route::post('/pacientes', [PatientController::class, 'store'])
+        ->name('patients.store');
+});
+
+
+/*
+| Listagem e visualização
+*/
+Route::middleware([
+    'auth',
+    'permission:patients.view',
+])->group(function () {
+
+    Route::get('/pacientes', [PatientController::class, 'index'])
+        ->name('patients.index');
+
+    Route::get('/pacientes/{patient}', [PatientController::class, 'show'])
+        ->whereNumber('patient')
+        ->name('patients.show');
+});
+
+
+/*
+| Edição
+*/
+Route::middleware([
+    'auth',
+    'permission:patients.update',
+])->group(function () {
+
+    Route::get('/pacientes/{patient}/editar', [PatientController::class, 'edit'])
+        ->whereNumber('patient')
+        ->name('patients.edit');
+
+    Route::put('/pacientes/{patient}', [PatientController::class, 'update'])
+        ->whereNumber('patient')
+        ->name('patients.update');
+
+    Route::patch('/pacientes/{patient}/status', [PatientController::class, 'toggleStatus'])
+        ->whereNumber('patient')
+        ->name('patients.toggle-status');
 });
