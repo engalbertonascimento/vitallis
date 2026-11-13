@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\NetworkController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -56,3 +58,42 @@ Route::middleware([
 Route::middleware('auth')
     ->post('/logout', [LoginController::class, 'destroy'])
     ->name('logout');
+    
+    
+/*
+|--------------------------------------------------------------------------
+| Redes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:network.view',
+])->group(function () {
+
+    Route::get('/redes', [NetworkController::class, 'index'])
+        ->name('networks.index');
+
+});
+
+Route::middleware([
+    'auth',
+    'permission:network.manage',
+])->group(function () {
+
+    Route::get('/redes/nova', [NetworkController::class, 'create'])
+        ->name('networks.create');
+
+    Route::post('/redes', [NetworkController::class, 'store'])
+        ->name('networks.store');
+
+    Route::get('/redes/{network}/editar', [NetworkController::class, 'edit'])
+        ->name('networks.edit');
+
+    Route::put('/redes/{network}', [NetworkController::class, 'update'])
+        ->name('networks.update');
+
+    Route::patch('/redes/{network}/status', [NetworkController::class, 'toggleStatus'])
+        ->name('networks.toggle-status');
+
+});
