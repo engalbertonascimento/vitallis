@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NetworkController;
+use App\Http\Controllers\UnitController;
 
 
 /*
@@ -95,5 +96,42 @@ Route::middleware([
 
     Route::patch('/redes/{network}/status', [NetworkController::class, 'toggleStatus'])
         ->name('networks.toggle-status');
+
+});
+/*
+|--------------------------------------------------------------------------
+| Unidades
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:unit.view',
+])->group(function () {
+
+    Route::get('/unidades', [UnitController::class, 'index'])
+        ->name('units.index');
+
+});
+
+Route::middleware([
+    'auth',
+    'permission:unit.manage',
+])->group(function () {
+
+    Route::get('/unidades/nova', [UnitController::class, 'create'])
+        ->name('units.create');
+
+    Route::post('/unidades', [UnitController::class, 'store'])
+        ->name('units.store');
+
+    Route::get('/unidades/{unit}/editar', [UnitController::class, 'edit'])
+        ->name('units.edit');
+
+    Route::put('/unidades/{unit}', [UnitController::class, 'update'])
+        ->name('units.update');
+
+    Route::patch('/unidades/{unit}/status', [UnitController::class, 'toggleStatus'])
+        ->name('units.toggle-status');
 
 });

@@ -175,14 +175,17 @@
 
         {{-- Unidades --}}
         @if($user->hasPermission('unit.view'))
-
+        
             <a
-                href="#"
-                class="flex items-center rounded-lg px-4 py-3 text-sm text-emerald-50 transition hover:bg-emerald-700"
+                href="{{ route('units.index') }}"
+                class="flex items-center rounded-lg px-4 py-3 text-sm transition
+                    {{ request()->routeIs('units.*')
+                        ? 'bg-emerald-700 font-medium text-white'
+                        : 'text-emerald-50 hover:bg-emerald-700' }}"
             >
                 Unidades
             </a>
-
+        
         @endif
 
 
