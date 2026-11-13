@@ -146,14 +146,17 @@
 
         {{-- Usuários --}}
         @if($user->hasPermission('users.view'))
-
+        
             <a
-                href="#"
-                class="flex items-center rounded-lg px-4 py-3 text-sm text-emerald-50 transition hover:bg-emerald-700"
+                href="{{ route('users.index') }}"
+                class="flex items-center rounded-lg px-4 py-3 text-sm transition
+                    {{ request()->routeIs('users.*')
+                        ? 'bg-emerald-700 font-medium text-white'
+                        : 'text-emerald-50 hover:bg-emerald-700' }}"
             >
                 Usuários
             </a>
-
+        
         @endif
 
 

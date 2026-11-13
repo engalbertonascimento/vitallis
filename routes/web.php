@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\UnitController;
+use App\Http\Controllers\UserController;
 
 
 /*
@@ -133,5 +134,49 @@ Route::middleware([
 
     Route::patch('/unidades/{unit}/status', [UnitController::class, 'toggleStatus'])
         ->name('units.toggle-status');
+
+});
+/*
+|--------------------------------------------------------------------------
+| Usuários
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:users.view',
+])->group(function () {
+
+    Route::get('/usuarios', [UserController::class, 'index'])
+        ->name('users.index');
+
+});
+
+Route::middleware([
+    'auth',
+    'permission:users.create',
+])->group(function () {
+
+    Route::get('/usuarios/novo', [UserController::class, 'create'])
+        ->name('users.create');
+
+    Route::post('/usuarios', [UserController::class, 'store'])
+        ->name('users.store');
+
+});
+
+Route::middleware([
+    'auth',
+    'permission:users.update',
+])->group(function () {
+
+    Route::get('/usuarios/{user}/editar', [UserController::class, 'edit'])
+        ->name('users.edit');
+
+    Route::put('/usuarios/{user}', [UserController::class, 'update'])
+        ->name('users.update');
+
+    Route::patch('/usuarios/{user}/status', [UserController::class, 'toggleStatus'])
+        ->name('users.toggle-status');
 
 });

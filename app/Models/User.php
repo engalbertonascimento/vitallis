@@ -12,8 +12,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
+#[Fillable([
+    'name',
+    'email',
+    'password',
+    'active',
+])]
+#[Hidden([
+    'password',
+    'remember_token',
+])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -29,6 +37,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'active' => 'boolean',
         ];
     }
 
@@ -62,11 +71,17 @@ class User extends Authenticatable
             ->wherePivot('active', true)
             ->when(
                 $networkId !== null,
-                fn ($query) => $query->wherePivot('network_id', $networkId)
+                fn ($query) => $query->wherePivot(
+                    'network_id',
+                    $networkId
+                )
             )
             ->when(
                 $unitId !== null,
-                fn ($query) => $query->wherePivot('unit_id', $unitId)
+                fn ($query) => $query->wherePivot(
+                    'unit_id',
+                    $unitId
+                )
             )
             ->exists();
     }
@@ -90,15 +105,27 @@ class User extends Authenticatable
             ->wherePivot('active', true)
             ->when(
                 $networkId !== null,
-                fn ($query) => $query->wherePivot('network_id', $networkId)
+                fn ($query) => $query->wherePivot(
+                    'network_id',
+                    $networkId
+                )
             )
             ->when(
                 $unitId !== null,
-                fn ($query) => $query->wherePivot('unit_id', $unitId)
+                fn ($query) => $query->wherePivot(
+                    'unit_id',
+                    $unitId
+                )
             )
-            ->whereHas('permissions', function ($query) use ($permissionSlug) {
-                $query->where('permissions.slug', $permissionSlug);
-            })
+            ->whereHas(
+                'permissions',
+                function ($query) use ($permissionSlug) {
+                    $query->where(
+                        'permissions.slug',
+                        $permissionSlug
+                    );
+                }
+            )
             ->exists();
     }
 
