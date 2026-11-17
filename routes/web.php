@@ -7,6 +7,12 @@ use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\UserContextController;
+use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\SpecialtyController;
+
 
 
 /*
@@ -278,4 +284,247 @@ Route::middleware([
     Route::patch('/pacientes/{patient}/status', [PatientController::class, 'toggleStatus'])
         ->whereNumber('patient')
         ->name('patients.toggle-status');
+});
+/*
+|--------------------------------------------------------------------------
+| Contexto operacional
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    Route::get(
+        '/contexto',
+        [UserContextController::class, 'index']
+    )->name('context.index');
+
+    Route::put(
+        '/contexto',
+        [UserContextController::class, 'update']
+    )->name('context.update');
+
+});
+/*
+|--------------------------------------------------------------------------
+| Funções e Permissões
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:roles.view',
+])->group(function () {
+
+    Route::get(
+        '/funcoes-permissoes',
+        [RolePermissionController::class, 'index']
+    )->name('roles.index');
+
+    Route::get(
+        '/funcoes-permissoes/{role}/editar',
+        [RolePermissionController::class, 'edit']
+    )
+        ->whereNumber('role')
+        ->name('roles.edit');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Permissões específicas da Unidade
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:unit_permissions.manage',
+])->group(function () {
+
+    Route::put(
+        '/funcoes-permissoes/{role}',
+        [RolePermissionController::class, 'update']
+    )
+        ->whereNumber('role')
+        ->name('roles.update-unit-permissions');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Gerenciamento de Funções
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:roles.manage',
+])->group(function () {
+
+    Route::get(
+        '/funcoes-permissoes/nova',
+        [RolePermissionController::class, 'create']
+    )->name('roles.create');
+
+    Route::post(
+        '/funcoes-permissoes',
+        [RolePermissionController::class, 'store']
+    )->name('roles.store');
+
+    Route::put(
+        '/funcoes-permissoes/{role}/padrao',
+        [RolePermissionController::class, 'updateDefaults']
+    )
+        ->whereNumber('role')
+        ->name('roles.update-defaults');
+});
+/*
+|--------------------------------------------------------------------------
+| Agenda - Visualização
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:appointments.view',
+])->group(function () {
+
+    Route::get(
+        '/agenda',
+        [AppointmentController::class, 'index']
+    )->name('appointments.index');
+
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Agenda - Agendamentos
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:appointments.create',
+])->group(function () {
+
+    Route::get(
+        '/agenda/novo',
+        [AppointmentController::class, 'create']
+    )->name('appointments.create');
+
+    Route::post(
+        '/agenda',
+        [AppointmentController::class, 'store']
+    )->name('appointments.store');
+
+});
+/*
+|--------------------------------------------------------------------------
+| Grades de Agenda
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:schedules.view',
+])->group(function () {
+
+    Route::get(
+        '/agenda/grades',
+        [ScheduleController::class, 'index']
+    )->name('schedules.index');
+
+});
+
+
+Route::middleware([
+    'auth',
+    'permission:schedules.create',
+])->group(function () {
+
+    Route::get(
+        '/agenda/grades/nova',
+        [ScheduleController::class, 'create']
+    )->name('schedules.create');
+
+    Route::post(
+        '/agenda/grades',
+        [ScheduleController::class, 'store']
+    )->name('schedules.store');
+
+});
+
+
+Route::middleware([
+    'auth',
+    'permission:schedules.update',
+])->group(function () {
+
+    Route::get(
+        '/agenda/grades/{schedule}/editar',
+        [ScheduleController::class, 'edit']
+    )
+        ->whereNumber('schedule')
+        ->name('schedules.edit');
+
+    Route::put(
+        '/agenda/grades/{schedule}',
+        [ScheduleController::class, 'update']
+    )
+        ->whereNumber('schedule')
+        ->name('schedules.update');
+
+});
+/*
+|--------------------------------------------------------------------------
+| Especialidades
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:specialties.view',
+])->group(function () {
+
+    Route::get(
+        '/especialidades',
+        [SpecialtyController::class, 'index']
+    )->name('specialties.index');
+});
+
+Route::middleware([
+    'auth',
+    'permission:specialties.manage',
+])->group(function () {
+
+    Route::get(
+        '/especialidades/nova',
+        [SpecialtyController::class, 'create']
+    )->name('specialties.create');
+
+    Route::post(
+        '/especialidades',
+        [SpecialtyController::class, 'store']
+    )->name('specialties.store');
+
+    Route::get(
+        '/especialidades/{specialty}/editar',
+        [SpecialtyController::class, 'edit']
+    )
+        ->whereNumber('specialty')
+        ->name('specialties.edit');
+
+    Route::put(
+        '/especialidades/{specialty}',
+        [SpecialtyController::class, 'update']
+    )
+        ->whereNumber('specialty')
+        ->name('specialties.update');
+
+    Route::patch(
+        '/especialidades/{specialty}/status',
+        [SpecialtyController::class, 'toggleStatus']
+    )
+        ->whereNumber('specialty')
+        ->name('specialties.toggle-status');
 });
