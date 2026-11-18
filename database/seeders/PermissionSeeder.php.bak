@@ -23,6 +23,8 @@ class PermissionSeeder extends Seeder
             ['name' => 'Criar agendamentos', 'slug' => 'appointments.create'],
             ['name' => 'Editar agendamentos', 'slug' => 'appointments.update'],
             ['name' => 'Cancelar agendamentos', 'slug' => 'appointments.cancel'],
+            ['name' => 'Iniciar atendimento', 'slug' => 'appointments.start'],
+            ['name' => 'Finalizar atendimento', 'slug' => 'appointments.complete'],
 
             // Prontuário
             ['name' => 'Visualizar prontuário', 'slug' => 'medical_records.view'],

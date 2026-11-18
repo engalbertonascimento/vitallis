@@ -12,7 +12,7 @@ use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SpecialtyController;
-
+use App\Http\Controllers\ServiceLocationController;
 
 
 /*
@@ -528,3 +528,162 @@ Route::middleware([
         ->whereNumber('specialty')
         ->name('specialties.toggle-status');
 });
+/*
+|--------------------------------------------------------------------------
+| Locais de Atendimento
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:service_locations.view',
+])->group(function () {
+
+    Route::get(
+        '/locais-atendimento',
+        [ServiceLocationController::class, 'index']
+    )->name('service-locations.index');
+
+});
+
+
+Route::middleware([
+    'auth',
+    'permission:service_locations.manage',
+])->group(function () {
+
+    Route::get(
+        '/locais-atendimento/novo',
+        [ServiceLocationController::class, 'create']
+    )->name('service-locations.create');
+
+    Route::post(
+        '/locais-atendimento',
+        [ServiceLocationController::class, 'store']
+    )->name('service-locations.store');
+
+    Route::get(
+        '/locais-atendimento/{serviceLocation}/editar',
+        [ServiceLocationController::class, 'edit']
+    )
+        ->whereNumber('serviceLocation')
+        ->name('service-locations.edit');
+
+    Route::put(
+        '/locais-atendimento/{serviceLocation}',
+        [ServiceLocationController::class, 'update']
+    )
+        ->whereNumber('serviceLocation')
+        ->name('service-locations.update');
+
+    Route::patch(
+        '/locais-atendimento/{serviceLocation}/status',
+        [ServiceLocationController::class, 'toggleStatus']
+    )
+        ->whereNumber('serviceLocation')
+        ->name('service-locations.toggle-status');
+
+});
+/*
+|--------------------------------------------------------------------------
+| Demais Cadastros
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->get(
+    '/cadastros',
+    function () {
+        $user = auth()->user();
+
+        if (
+            ! $user->hasPermission('specialties.view')
+            && ! $user->hasPermission('service_locations.view')
+        ) {
+            abort(403);
+        }
+
+        return view('registries.index');
+    }
+)->name('registries.index');
+/*
+|--------------------------------------------------------------------------
+| Agenda - Check-in
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'permission:appointments.checkin',
+])->group(function () {
+
+    Route::patch(
+        '/agenda/{appointment}/checkin',
+        [AppointmentController::class, 'checkin']
+    )->name('appointments.checkin');
+
+});
+
+Route::middleware([
+    'auth',
+    'permission:appointments.no_show',
+])->group(function () {
+
+    Route::patch(
+        '/agenda/{appointment}/no-show',
+        [AppointmentController::class, 'noShow']
+    )->name('appointments.no_show');
+
+});
+
+Route::middleware([
+    'auth',
+    'permission:appointments.confirm',
+])->patch(
+    '/agenda/{appointment}/confirmar',
+    [AppointmentController::class, 'confirm']
+)->name('appointments.confirm');
+
+Route::middleware([
+    'auth',
+    'permission:appointments.reschedule',
+])->get(
+    '/agenda/{appointment}/reagendar',
+    [AppointmentController::class, 'reschedule']
+)->name('appointments.reschedule');
+
+Route::middleware([
+    'auth',
+    'permission:appointments.cancel',
+])->patch(
+    '/agenda/{appointment}/cancelar',
+    [AppointmentController::class, 'cancel']
+)->name('appointments.cancel');
+
+Route::middleware([
+    'auth',
+    'permission:appointments.reschedule',
+])->patch(
+    '/agenda/{appointment}/reagendar',
+    [AppointmentController::class, 'updateSchedule']
+)->name('appointments.reschedule.update');
+
+/*
+|--------------------------------------------------------------------------
+| Agenda - Iniciar / Finalizar Atendimento
+|--------------------------------------------------------------------------
+*/
+Route::middleware([
+    'auth',
+    'permission:appointments.start',
+])->patch(
+    '/agenda/{appointment}/iniciar',
+    [AppointmentController::class, 'start']
+)->name('appointments.start');
+
+Route::middleware([
+    'auth',
+    'permission:appointments.complete',
+])->patch(
+    '/agenda/{appointment}/finalizar',
+    [AppointmentController::class, 'complete']
+)->name('appointments.complete');

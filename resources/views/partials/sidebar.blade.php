@@ -232,6 +232,28 @@
             </a>
 
         @endif
+        
+        {{-- Demais Cadastros --}}
+        @if(
+            $user->hasPermission('specialties.view') ||
+            $user->hasPermission('service_locations.view')
+        )
+        
+            <a
+                href="{{ route('registries.index') }}"
+                class="flex items-center rounded-lg px-4 py-3 text-sm transition
+                    {{
+                        request()->routeIs('registries.*') ||
+                        request()->routeIs('specialties.*') ||
+                        request()->routeIs('service-locations.*')
+                            ? 'bg-emerald-700 font-medium text-white'
+                            : 'text-emerald-50 hover:bg-emerald-700'
+                    }}"
+            >
+                Demais Cadastros
+            </a>
+        
+        @endif
 
 
         {{-- Auditoria --}}

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Schedule;
+use App\Models\ServiceLocation;
+use App\Models\Specialty;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -30,13 +32,26 @@ class ScheduleController extends Controller
         $unit = Unit::query()
             ->with('network')
             ->whereKey($context->unit_id)
-            ->where('network_id', $context->network_id)
+            ->where(
+                'network_id',
+                $context->network_id
+            )
             ->firstOrFail();
 
         $schedules = Schedule::query()
-            ->with('professional')
-            ->where('network_id', $context->network_id)
-            ->where('unit_id', $context->unit_id)
+            ->with([
+                'professional',
+                'specialtyRelation',
+                'serviceLocation.parent',
+            ])
+            ->where(
+                'network_id',
+                $context->network_id
+            )
+            ->where(
+                'unit_id',
+                $context->unit_id
+            )
             ->orderBy('professional_user_id')
             ->orderBy('weekday')
             ->orderBy('starts_at')
@@ -68,45 +83,66 @@ class ScheduleController extends Controller
         $unit = Unit::query()
             ->with('network')
             ->whereKey($context->unit_id)
-            ->where('network_id', $context->network_id)
+            ->where(
+                'network_id',
+                $context->network_id
+            )
+            ->where('active', true)
             ->firstOrFail();
 
-        /*
-         * Profissionais com vínculo ativo na unidade
-         * ou válido para toda a rede atual.
-         */
-        $professionalIds = DB::table('role_user')
-            ->where('network_id', $context->network_id)
-            ->where('active', true)
-            ->where(function ($query) use ($context) {
-                $query
-                    ->where('unit_id', $context->unit_id)
-                    ->orWhereNull('unit_id');
-            })
-            ->pluck('user_id')
-            ->unique();
+        $professionals = $this->professionalsForContext(
+            $context
+        );
 
-        $professionals = User::query()
+        $specialties = Specialty::query()
             ->where('active', true)
-            ->whereIn('id', $professionalIds)
             ->orderBy('name')
             ->get([
                 'id',
                 'name',
-                'email',
+                'code',
             ]);
+
+        /*
+         * Um local de atendimento só pode ser selecionado
+         * se pertencer à unidade ativa.
+         */
+        $serviceLocations = ServiceLocation::query()
+            ->with('parent')
+            ->where(
+                'unit_id',
+                $context->unit_id
+            )
+            ->where('active', true)
+            ->orderByRaw(
+                "CASE type
+                    WHEN 'building' THEN 1
+                    WHEN 'block' THEN 2
+                    WHEN 'floor' THEN 3
+                    WHEN 'wing' THEN 4
+                    WHEN 'sector' THEN 5
+                    WHEN 'room' THEN 6
+                    WHEN 'office' THEN 7
+                    WHEN 'bed' THEN 8
+                    ELSE 9
+                END"
+            )
+            ->orderBy('name')
+            ->get();
 
         return view(
             'schedules.create',
             compact(
                 'unit',
-                'professionals'
+                'professionals',
+                'specialties',
+                'serviceLocations'
             )
         );
     }
 
     /**
-     * Salva a nova grade.
+     * Salva uma nova grade.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -119,7 +155,262 @@ class ScheduleController extends Controller
             );
         }
 
-        $validated = $request->validate([
+        $validated = $this->validateSchedule(
+            $request
+        );
+
+        $this->validateScheduleContext(
+            $validated,
+            $context
+        );
+
+        $this->validateSchedulePeriod(
+            $validated
+        );
+
+        $this->validateProfessionalAccess(
+            (int) $validated['professional_user_id'],
+            $context
+        );
+
+        $this->validateSpecialty(
+            (int) $validated['specialty_id']
+        );
+
+        $this->validateServiceLocation(
+            (int) $validated['service_location_id'],
+            $context
+        );
+
+        Schedule::create([
+            'network_id' =>
+                $context->network_id,
+
+            'unit_id' =>
+                $context->unit_id,
+
+            'professional_user_id' =>
+                $validated['professional_user_id'],
+
+            'name' =>
+                $this->nullableTrim(
+                    $validated['name'] ?? null
+                ),
+
+            'specialty_id' =>
+                $validated['specialty_id'],
+
+            'service_location_id' =>
+                $validated['service_location_id'],
+
+            /*
+             * Campos legados.
+             *
+             * As novas grades não gravam mais especialidade
+             * ou local como texto livre.
+             */
+            'specialty' => null,
+            'room' => null,
+
+            'starts_on' =>
+                $validated['starts_on'],
+
+            'ends_on' =>
+                $validated['ends_on'] ?? null,
+
+            'weekday' =>
+                $validated['weekday'],
+
+            'starts_at' =>
+                $validated['starts_at'],
+
+            'ends_at' =>
+                $validated['ends_at'],
+
+            'slot_duration_minutes' =>
+                $validated['slot_duration_minutes'],
+
+            'slot_capacity' =>
+                $validated['slot_capacity'],
+
+            'active' => true,
+        ]);
+
+        return redirect()
+            ->route('schedules.index')
+            ->with(
+                'success',
+                'Grade de agenda criada com sucesso.'
+            );
+    }
+
+    /**
+     * Formulário de edição da grade.
+     */
+    public function edit(
+        Request $request,
+        Schedule $schedule
+    ): View {
+        $context = $this->activeContext($request);
+
+        $this->authorizeScheduleContext(
+            $schedule,
+            $context
+        );
+
+        $unit = Unit::query()
+            ->with('network')
+            ->whereKey($context->unit_id)
+            ->where(
+                'network_id',
+                $context->network_id
+            )
+            ->firstOrFail();
+
+        $professionals = $this->professionalsForContext(
+            $context
+        );
+
+        $specialties = Specialty::query()
+            ->where('active', true)
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'code',
+            ]);
+
+        $serviceLocations = ServiceLocation::query()
+            ->with('parent')
+            ->where(
+                'unit_id',
+                $context->unit_id
+            )
+            ->where('active', true)
+            ->orderByRaw(
+                "CASE type
+                    WHEN 'building' THEN 1
+                    WHEN 'block' THEN 2
+                    WHEN 'floor' THEN 3
+                    WHEN 'wing' THEN 4
+                    WHEN 'sector' THEN 5
+                    WHEN 'room' THEN 6
+                    WHEN 'office' THEN 7
+                    WHEN 'bed' THEN 8
+                    ELSE 9
+                END"
+            )
+            ->orderBy('name')
+            ->get();
+
+        return view(
+            'schedules.edit',
+            compact(
+                'schedule',
+                'unit',
+                'professionals',
+                'specialties',
+                'serviceLocations'
+            )
+        );
+    }
+
+    /**
+     * Atualiza uma grade.
+     */
+    public function update(
+        Request $request,
+        Schedule $schedule
+    ): RedirectResponse {
+        $context = $this->activeContext($request);
+
+        $this->authorizeScheduleContext(
+            $schedule,
+            $context
+        );
+
+        $validated = $this->validateSchedule(
+            $request
+        );
+
+        $this->validateScheduleContext(
+            $validated,
+            $context
+        );
+
+        $this->validateSchedulePeriod(
+            $validated
+        );
+
+        $this->validateProfessionalAccess(
+            (int) $validated['professional_user_id'],
+            $context
+        );
+
+        $this->validateSpecialty(
+            (int) $validated['specialty_id']
+        );
+
+        $this->validateServiceLocation(
+            (int) $validated['service_location_id'],
+            $context
+        );
+
+        $schedule->update([
+            'professional_user_id' =>
+                $validated['professional_user_id'],
+
+            'name' =>
+                $this->nullableTrim(
+                    $validated['name'] ?? null
+                ),
+
+            'specialty_id' =>
+                $validated['specialty_id'],
+
+            'service_location_id' =>
+                $validated['service_location_id'],
+
+            'specialty' => null,
+            'room' => null,
+
+            'starts_on' =>
+                $validated['starts_on'],
+
+            'ends_on' =>
+                $validated['ends_on'] ?? null,
+
+            'weekday' =>
+                $validated['weekday'],
+
+            'starts_at' =>
+                $validated['starts_at'],
+
+            'ends_at' =>
+                $validated['ends_at'],
+
+            'slot_duration_minutes' =>
+                $validated['slot_duration_minutes'],
+
+            'slot_capacity' =>
+                $validated['slot_capacity'],
+        ]);
+
+        return redirect()
+            ->route('schedules.index')
+            ->with(
+                'success',
+                'Grade de agenda atualizada com sucesso.'
+            );
+    }
+
+    /**
+     * Validação principal da grade.
+     */
+    private function validateSchedule(
+        Request $request
+    ): array {
+        return $request->validate([
             'professional_user_id' => [
                 'required',
                 'integer',
@@ -132,10 +423,16 @@ class ScheduleController extends Controller
                 'max:255',
             ],
 
-            'specialty' => [
-                'nullable',
-                'string',
-                'max:255',
+            'specialty_id' => [
+                'required',
+                'integer',
+                'exists:specialties,id',
+            ],
+
+            'service_location_id' => [
+                'required',
+                'integer',
+                'exists:service_locations,id',
             ],
 
             'starts_on' => [
@@ -178,14 +475,15 @@ class ScheduleController extends Controller
                 'min:1',
                 'max:100',
             ],
-
-            'room' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
         ]);
+    }
 
+    /**
+     * Valida o período diário da grade.
+     */
+    private function validateSchedulePeriod(
+        array $validated
+    ): void {
         if (
             $validated['ends_at']
             <= $validated['starts_at']
@@ -196,28 +494,75 @@ class ScheduleController extends Controller
             ]);
         }
 
-        /*
-         * O profissional precisa estar vinculado à unidade
-         * ou possuir vínculo válido para toda a rede.
-         */
-        $professionalHasAccess = DB::table('role_user')
+        $startMinutes = $this->timeToMinutes(
+            $validated['starts_at']
+        );
+
+        $endMinutes = $this->timeToMinutes(
+            $validated['ends_at']
+        );
+
+        $availableMinutes =
+            $endMinutes - $startMinutes;
+
+        if (
+            $validated['slot_duration_minutes']
+            > $availableMinutes
+        ) {
+            throw ValidationException::withMessages([
+                'slot_duration_minutes' =>
+                    'A duração do atendimento é maior que o período disponível na grade.',
+            ]);
+        }
+    }
+
+    /**
+     * Confirma que os dados pertencem ao contexto atual.
+     */
+    private function validateScheduleContext(
+        array $validated,
+        object $context
+    ): void {
+        Unit::query()
+            ->whereKey($context->unit_id)
+            ->where(
+                'network_id',
+                $context->network_id
+            )
+            ->where('active', true)
+            ->firstOrFail();
+    }
+
+    /**
+     * Confirma que o profissional está disponível
+     * no contexto da unidade atual.
+     */
+    private function validateProfessionalAccess(
+        int $professionalUserId,
+        object $context
+    ): void {
+        $professionalHasAccess = DB::table(
+            'role_user'
+        )
             ->where(
                 'user_id',
-                $validated['professional_user_id']
+                $professionalUserId
             )
             ->where(
                 'network_id',
                 $context->network_id
             )
             ->where('active', true)
-            ->where(function ($query) use ($context) {
-                $query
-                    ->where(
-                        'unit_id',
-                        $context->unit_id
-                    )
-                    ->orWhereNull('unit_id');
-            })
+            ->where(
+                function ($query) use ($context) {
+                    $query
+                        ->where(
+                            'unit_id',
+                            $context->unit_id
+                        )
+                        ->orWhereNull('unit_id');
+                }
+            )
             ->exists();
 
         if (! $professionalHasAccess) {
@@ -226,70 +571,160 @@ class ScheduleController extends Controller
                     'O profissional selecionado não possui vínculo ativo com esta unidade.',
             ]);
         }
+    }
 
-        Schedule::create([
-            'network_id' =>
-                $context->network_id,
+    /**
+     * Confirma que a especialidade está ativa.
+     */
+    private function validateSpecialty(
+        int $specialtyId
+    ): void {
+        $specialtyExists = Specialty::query()
+            ->whereKey($specialtyId)
+            ->where('active', true)
+            ->exists();
 
-            'unit_id' =>
-                $context->unit_id,
+        if (! $specialtyExists) {
+            throw ValidationException::withMessages([
+                'specialty_id' =>
+                    'A especialidade selecionada não está disponível.',
+            ]);
+        }
+    }
 
-            'professional_user_id' =>
-                $validated['professional_user_id'],
+    /**
+     * Confirma que o local pertence à unidade ativa.
+     */
+    private function validateServiceLocation(
+        int $serviceLocationId,
+        object $context
+    ): void {
+        $locationExists = ServiceLocation::query()
+            ->whereKey($serviceLocationId)
+            ->where(
+                'unit_id',
+                $context->unit_id
+            )
+            ->where('active', true)
+            ->exists();
 
-            'name' =>
-                $validated['name'] ?? null,
+        if (! $locationExists) {
+            throw ValidationException::withMessages([
+                'service_location_id' =>
+                    'O local de atendimento selecionado não pertence à unidade atual.',
+            ]);
+        }
+    }
 
-            'specialty' =>
-                $validated['specialty'] ?? null,
-
-            'starts_on' =>
-                $validated['starts_on'],
-
-            'ends_on' =>
-                $validated['ends_on'] ?? null,
-
-            'weekday' =>
-                $validated['weekday'],
-
-            'starts_at' =>
-                $validated['starts_at'],
-
-            'ends_at' =>
-                $validated['ends_at'],
-
-            'slot_duration_minutes' =>
-                $validated['slot_duration_minutes'],
-
-            'slot_capacity' =>
-                $validated['slot_capacity'],
-
-            'room' =>
-                $validated['room'] ?? null,
-
-            'active' => true,
-        ]);
-
-        return redirect()
-            ->route('schedules.index')
-            ->with(
-                'success',
-                'Grade de agenda criada com sucesso.'
+    /**
+     * Protege edição direta por URL.
+     */
+    private function authorizeScheduleContext(
+        Schedule $schedule,
+        ?object $context
+    ): void {
+        if (! $context) {
+            abort(
+                403,
+                'Selecione uma unidade de trabalho.'
             );
+        }
+
+        if (
+            (int) $schedule->network_id
+                !== (int) $context->network_id
+            || (int) $schedule->unit_id
+                !== (int) $context->unit_id
+        ) {
+            abort(
+                403,
+                'Esta grade pertence a outra unidade.'
+            );
+        }
+    }
+
+    /**
+     * Retorna os profissionais disponíveis no contexto.
+     */
+    private function professionalsForContext(
+        object $context
+    ) {
+        $professionalIds = DB::table('role_user')
+            ->where(
+                'network_id',
+                $context->network_id
+            )
+            ->where('active', true)
+            ->where(
+                function ($query) use ($context) {
+                    $query
+                        ->where(
+                            'unit_id',
+                            $context->unit_id
+                        )
+                        ->orWhereNull('unit_id');
+                }
+            )
+            ->pluck('user_id')
+            ->unique();
+
+        return User::query()
+            ->where('active', true)
+            ->whereIn(
+                'id',
+                $professionalIds
+            )
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'email',
+            ]);
+    }
+
+    /**
+     * Converte HH:MM em minutos.
+     */
+    private function timeToMinutes(
+        string $time
+    ): int {
+        [$hours, $minutes] = array_map(
+            'intval',
+            explode(':', $time)
+        );
+
+        return ($hours * 60) + $minutes;
+    }
+
+    /**
+     * Normaliza texto opcional.
+     */
+    private function nullableTrim(
+        ?string $value
+    ): ?string {
+        if (
+            $value === null
+            || trim($value) === ''
+        ) {
+            return null;
+        }
+
+        return trim($value);
     }
 
     /**
      * Resolve o contexto ativo.
      */
-    private function activeContext(Request $request): ?object
-    {
-        $networkId = $request->session()->get(
-            'active_network_id'
-        );
+    private function activeContext(
+        Request $request
+    ): ?object {
+        $networkId = $request
+            ->session()
+            ->get('active_network_id');
 
-        $unitId = $request->session()->get(
-            'active_unit_id'
-        );
+        $unitId = $request
+            ->session()
+            ->get('active_unit_id');
 
         if ($networkId && $unitId) {
             return (object) [

@@ -77,6 +77,18 @@ class PermissionSeeder extends Seeder
                 'name' => 'Registrar ausência',
                 'slug' => 'appointments.no_show',
             ],
+            [
+                'name' => 'Reagendar agendamentos',
+                'slug' => 'appointments.reschedule',
+            ],
+            [
+                'name' => 'Iniciar atendimento',
+                'slug' => 'appointments.start',
+            ],
+            [
+                'name' => 'Finalizar atendimento',
+                'slug' => 'appointments.complete',
+            ],
 
 
             /*

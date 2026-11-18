@@ -1,0 +1,404 @@
+@extends('layouts.app')
+
+@section('title', 'Agenda | Vitallis')
+@section('header', 'Agenda')
+@section('subtitle', 'Agenda de atendimentos da unidade atual')
+
+@section('content')
+
+@php
+    $canCreateAppointment = $user->hasPermission('appointments.create');
+
+    $canManageSchedules =
+        $user->hasPermission('schedules.create')
+        || $user->hasPermission('schedules.update')
+        || $user->hasPermission('schedules.block');
+
+    $previousDate = $date->copy()->subDay()->format('Y-m-d');
+    $nextDate = $date->copy()->addDay()->format('Y-m-d');
+
+    $baseFilters = request()->only([
+        'professional_id',
+        'specialty_id',
+        'status',
+    ]);
+@endphp
+
+<div class="space-y-6">
+
+    {{-- Cabeçalho --}}
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+        <div>
+            <h1 class="text-2xl font-semibold text-slate-900">
+                Agenda
+            </h1>
+
+            <p class="mt-1 text-sm text-slate-500">
+                Visualize os horários e atendimentos disponíveis na unidade atual.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+
+            @if($user->hasPermission('schedules.view'))
+                <a
+                    href="{{ route('schedules.index') }}"
+                    class="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                >
+                    Gerenciar grade
+                </a>
+            @endif
+
+            @if($canCreateAppointment)
+                <a
+                    href="{{ route('appointments.create') }}"
+                    class="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                >
+                    Novo agendamento
+                </a>
+            @endif
+
+        </div>
+    </div>
+
+    {{-- Navegação --}}
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+
+            <div class="flex items-center gap-2">
+
+                {{-- Anterior --}}
+                <a
+                    href="{{ route('appointments.index', array_merge($baseFilters, ['date' => $previousDate])) }}"
+                    class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                    ←
+                </a>
+
+                {{-- Hoje --}}
+                <a
+                    href="{{ route('appointments.index', array_merge($baseFilters, ['date' => now()->format('Y-m-d')])) }}"
+                    class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                    Hoje
+                </a>
+
+                {{-- Próximo --}}
+                <a
+                    href="{{ route('appointments.index', array_merge($baseFilters, ['date' => $nextDate])) }}"
+                    class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                    →
+                </a>
+
+                {{-- Calendário --}}
+                <div class="relative">
+
+                    <button
+                        type="button"
+                        onclick="document.getElementById('agendaDate').showPicker()"
+                        class="rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50"
+                        title="Escolher data"
+                    >
+                        📅
+                    </button>
+
+                    <input
+                        id="agendaDate"
+                        type="date"
+                        value="{{ $date->format('Y-m-d') }}"
+                        class="absolute h-0 w-0 opacity-0"
+                        onchange="changeAgendaDate(this.value)"
+                    >
+
+                </div>
+
+            </div>
+
+            {{-- Data atual --}}
+            <div class="text-center">
+                <p class="font-semibold capitalize text-slate-900">
+                    {{ $date->translatedFormat('d \d\e F \d\e Y') }}
+                </p>
+
+                <p class="mt-1 text-xs capitalize text-slate-500">
+                    {{ $date->translatedFormat('l') }}
+                </p>
+            </div>
+
+            {{-- Modo --}}
+            <div class="flex rounded-lg border border-slate-300 bg-white p-1">
+
+                <button
+                    type="button"
+                    class="rounded-md bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700"
+                >
+                    Dia
+                </button>
+
+                <button
+                    type="button"
+                    disabled
+                    title="Visualização semanal será implementada posteriormente"
+                    class="cursor-not-allowed rounded-md px-4 py-2 text-sm text-slate-400"
+                >
+                    Semana
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    {{-- Filtros --}}
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+
+        <form
+            method="GET"
+            action="{{ route('appointments.index') }}"
+            id="agendaFilters"
+        >
+
+            <input
+                type="hidden"
+                name="date"
+                value="{{ $date->format('Y-m-d') }}"
+            >
+
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+
+                {{-- Profissional --}}
+                <div>
+
+                    <label class="mb-2 block text-sm font-medium text-slate-700">
+                        Profissional
+                    </label>
+
+                    <select
+                        name="professional_id"
+                        onchange="this.form.submit()"
+                        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700"
+                    >
+
+                        <option value="">
+                            Todos os profissionais
+                        </option>
+
+                        @foreach($professionals as $professional)
+
+                            <option
+                                value="{{ $professional->id }}"
+                                @selected(request('professional_id') == $professional->id)
+                            >
+                                {{ $professional->name }}
+                            </option>
+
+                        @endforeach
+
+                    </select>
+
+                </div>
+
+                {{-- Especialidade --}}
+                <div>
+
+                    <label class="mb-2 block text-sm font-medium text-slate-700">
+                        Especialidade
+                    </label>
+
+                    <select
+                        name="specialty_id"
+                        onchange="this.form.submit()"
+                        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700"
+                    >
+
+                        <option value="">
+                            Todas as especialidades
+                        </option>
+
+                        @foreach($specialties as $specialty)
+
+                            <option
+                                value="{{ $specialty->id }}"
+                                @selected(request('specialty_id') == $specialty->id)
+                            >
+                                {{ $specialty->name }}
+                            </option>
+
+                        @endforeach
+
+                    </select>
+
+                </div>
+
+                {{-- Situação --}}
+                <div>
+
+                    <label class="mb-2 block text-sm font-medium text-slate-700">
+                        Situação
+                    </label>
+
+                    <select
+                        name="status"
+                        onchange="this.form.submit()"
+                        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700"
+                    >
+
+                        <option value="">Todos os atendimentos</option>
+
+                        <option value="scheduled" @selected(request('status') === 'scheduled')>
+                            Agendado
+                        </option>
+
+                        <option value="confirmed" @selected(request('status') === 'confirmed')>
+                            Confirmado
+                        </option>
+
+                        <option value="waiting" @selected(request('status') === 'waiting')>
+                            Aguardando
+                        </option>
+
+                        <option value="in_progress" @selected(request('status') === 'in_progress')>
+                            Em atendimento
+                        </option>
+
+                        <option value="completed" @selected(request('status') === 'completed')>
+                            Finalizado
+                        </option>
+
+                        <option value="cancelled" @selected(request('status') === 'cancelled')>
+                            Cancelado
+                        </option>
+
+                        <option value="no_show" @selected(request('status') === 'no_show')>
+                            Não compareceu
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </section>
+
+    {{-- Agenda --}}
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+
+        <div class="border-b border-slate-200 px-6 py-5">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+                    <h2 class="font-semibold text-slate-900">
+                        Agenda do dia
+                    </h2>
+
+                    <p class="mt-1 text-sm text-slate-500">
+                        Horários disponíveis e pacientes agendados.
+                    </p>
+                </div>
+
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                    {{ $appointments->count() }}
+                    {{ $appointments->count() === 1 ? 'atendimento' : 'atendimentos' }}
+                </span>
+
+            </div>
+
+        </div>
+
+        @if($schedules->isEmpty())
+
+            <div class="px-6 py-16 text-center">
+
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 font-semibold text-emerald-700">
+                    A
+                </div>
+
+                <h3 class="mt-4 font-medium text-slate-800">
+                    Nenhum horário disponível
+                </h3>
+
+                <p class="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-slate-500">
+                    Não existem grades de atendimento disponíveis para esta unidade nesta data.
+                </p>
+
+                @if($canManageSchedules)
+                    <p class="mt-4 text-sm font-medium text-emerald-700">
+                        Seu perfil possui permissão para administrar grades de agenda.
+                    </p>
+                @endif
+
+            </div>
+
+        @else
+
+            <div class="divide-y divide-slate-100">
+
+                @foreach($schedules as $schedule)
+
+                    <div class="px-6 py-5">
+
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+
+                            <div>
+
+                                <p class="font-semibold text-slate-900">
+                                    {{ $schedule->professional?->name ?? 'Profissional não identificado' }}
+                                </p>
+
+                                <p class="mt-1 text-sm text-slate-500">
+
+                                    {{ $schedule->specialtyRelation?->name ?? 'Sem especialidade' }}
+
+                                    @if($schedule->serviceLocation)
+                                        • {{ $schedule->serviceLocation->name }}
+                                    @endif
+
+                                </p>
+
+                            </div>
+
+                            <div class="text-sm font-medium text-slate-700">
+
+                                {{ substr($schedule->starts_at, 0, 5) }}
+                                às
+                                {{ substr($schedule->ends_at, 0, 5) }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                @endforeach
+
+            </div>
+
+        @endif
+
+    </section>
+
+</div>
+
+<script>
+function changeAgendaDate(date) {
+    if (!date) {
+        return;
+    }
+
+    const url = new URL(window.location.href);
+
+    url.searchParams.set('date', date);
+
+    window.location.href = url.toString();
+}
+</script>
+
+@endsection

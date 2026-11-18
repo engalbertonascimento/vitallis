@@ -12,29 +12,149 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Models\Specialty;
+use App\Models\User;
 
 class AppointmentController extends Controller
 {
     /**
      * Agenda da unidade ativa.
      */
-    public function index(Request $request): View
-    {
-        $user = $request->user();
-        $context = $this->activeContext($request);
+public function index(Request $request): View
+{
+    $user = $request->user();
+    $context = $this->activeContext($request);
 
-        if (! $user->isVitallisAdmin() && ! $context) {
-            abort(
-                403,
-                'Selecione uma unidade de trabalho para acessar a agenda.'
-            );
-        }
-
-        return view('appointments.index', [
-            'user' => $user,
-            'context' => $context,
-        ]);
+    if (! $user->isVitallisAdmin() && ! $context) {
+        abort(403, 'Selecione uma unidade de trabalho para acessar a agenda.');
     }
+
+    if (! $context) {
+        abort(403, 'Selecione uma unidade de trabalho para acessar a agenda.');
+    }
+
+    // Data selecionada
+    try {
+        $date = $request->filled('date')
+            ? Carbon::createFromFormat('Y-m-d', $request->date)->startOfDay()
+            : now()->startOfDay();
+    } catch (\Throwable $e) {
+        $date = now()->startOfDay();
+    }
+
+    // Grades válidas para o dia selecionado
+    $schedulesQuery = Schedule::query()
+        ->with([
+            'professional',
+            'specialtyRelation',
+            'serviceLocation',
+        ])
+        ->where('network_id', $context->network_id)
+        ->where('unit_id', $context->unit_id)
+        ->where('active', true)
+        ->where('weekday', $date->dayOfWeek)
+        ->whereDate('starts_on', '<=', $date->toDateString())
+        ->where(function ($query) use ($date) {
+            $query
+                ->whereNull('ends_on')
+                ->orWhereDate('ends_on', '>=', $date->toDateString());
+        });
+
+    // Filtro profissional
+    if ($request->filled('professional_id')) {
+        $schedulesQuery->where(
+            'professional_user_id',
+            $request->integer('professional_id')
+        );
+    }
+
+    // Filtro especialidade
+    if ($request->filled('specialty_id')) {
+        $schedulesQuery->where(
+            'specialty_id',
+            $request->integer('specialty_id')
+        );
+    }
+
+    $schedules = $schedulesQuery
+        ->orderBy('starts_at')
+        ->get();
+
+    // Profissionais disponíveis na unidade
+    $professionals = User::query()
+        ->whereIn(
+            'id',
+            Schedule::query()
+                ->where('network_id', $context->network_id)
+                ->where('unit_id', $context->unit_id)
+                ->where('active', true)
+                ->whereNotNull('professional_user_id')
+                ->select('professional_user_id')
+        )
+        ->orderBy('name')
+        ->get();
+
+    // Especialidades disponíveis na unidade
+    $specialties = Specialty::query()
+        ->where('active', true)
+        ->whereIn(
+            'id',
+            Schedule::query()
+                ->where('network_id', $context->network_id)
+                ->where('unit_id', $context->unit_id)
+                ->where('active', true)
+                ->whereNotNull('specialty_id')
+                ->select('specialty_id')
+        )
+        ->orderBy('name')
+        ->get();
+
+    // Agendamentos do dia
+    $appointmentsQuery = Appointment::query()
+        ->with([
+            'patient',
+            'professional',
+            'schedule.specialtyRelation',
+        ])
+        ->where('network_id', $context->network_id)
+        ->where('unit_id', $context->unit_id)
+        ->whereDate('starts_at', $date->toDateString());
+
+    if ($request->filled('professional_id')) {
+        $appointmentsQuery->where(
+            'professional_user_id',
+            $request->integer('professional_id')
+        );
+    }
+
+    if ($request->filled('specialty_id')) {
+        $appointmentsQuery->whereHas(
+            'schedule',
+            fn ($query) => $query->where(
+                'specialty_id',
+                $request->integer('specialty_id')
+            )
+        );
+    }
+
+    if ($request->filled('status')) {
+        $appointmentsQuery->where('status', $request->status);
+    }
+
+    $appointments = $appointmentsQuery
+        ->orderBy('starts_at')
+        ->get();
+
+    return view('appointments.index', [
+        'user' => $user,
+        'context' => $context,
+        'date' => $date,
+        'schedules' => $schedules,
+        'appointments' => $appointments,
+        'professionals' => $professionals,
+        'specialties' => $specialties,
+    ]);
+}
 
     /**
      * Formulário para novo agendamento.
@@ -481,4 +601,428 @@ class AppointmentController extends Controller
                 (int) $context->unit_id,
         ];
     }
+    /**
+ * Registra a chegada do paciente.
+ */
+public function checkin(
+    Request $request,
+    Appointment $appointment
+): RedirectResponse {
+
+    $context = $this->activeContext($request);
+
+    if (
+        ! $context
+        || $appointment->network_id !== $context->network_id
+        || $appointment->unit_id !== $context->unit_id
+    ) {
+        abort(403, 'Este agendamento não pertence à unidade atual.');
+    }
+
+    if (! in_array($appointment->status, ['scheduled', 'confirmed'])) {
+        return back()->with(
+            'error',
+            'Este atendimento não permite check-in.'
+        );
+    }
+
+    $appointment->update([
+        'status' => 'waiting',
+        'checked_in_at' => now(),
+    ]);
+
+    return back()->with(
+        'success',
+        'Chegada do paciente registrada com sucesso.'
+    );
+}
+/**
+ * Registra ausência do paciente.
+ */
+public function noShow(
+    Request $request,
+    Appointment $appointment
+): RedirectResponse {
+
+    $context = $this->activeContext($request);
+
+    if (
+        ! $context
+        || $appointment->network_id !== $context->network_id
+        || $appointment->unit_id !== $context->unit_id
+    ) {
+        abort(403, 'Este agendamento não pertence à unidade atual.');
+    }
+
+    if (! in_array($appointment->status, ['scheduled', 'confirmed'])) {
+        return back()->with(
+            'error',
+            'Este atendimento não permite registrar ausência.'
+        );
+    }
+
+    if (now()->lt($appointment->starts_at)) {
+        return back()->with(
+            'error',
+            'Não é possível registrar ausência antes do horário agendado.'
+        );
+    }
+
+    $appointment->update([
+        'status' => 'no_show',
+    ]);
+
+    return back()->with(
+        'success',
+        'Paciente registrado como não compareceu.'
+    );
+}
+
+/**
+ * Inicia o atendimento.
+ */
+public function start(
+    Request $request,
+    Appointment $appointment
+): RedirectResponse {
+    $context = $this->activeContext($request);
+
+    if (
+        ! $context
+        || $appointment->network_id !== $context->network_id
+        || $appointment->unit_id !== $context->unit_id
+    ) {
+        abort(403, 'Este agendamento nÃ£o pertence Ã  unidade atual.');
+    }
+
+    if ($appointment->status !== 'waiting') {
+        return back()->with(
+            'error',
+            'Somente pacientes aguardando podem iniciar atendimento.'
+        );
+    }
+
+    $appointment->update([
+        'status' => 'in_progress',
+    ]);
+
+    return back()->with('success', 'Atendimento iniciado.');
+}
+
+/**
+ * Finaliza o atendimento.
+ */
+public function complete(
+    Request $request,
+    Appointment $appointment
+): RedirectResponse {
+    $context = $this->activeContext($request);
+
+    if (
+        ! $context
+        || $appointment->network_id !== $context->network_id
+        || $appointment->unit_id !== $context->unit_id
+    ) {
+        abort(403, 'Este agendamento nÃ£o pertence Ã  unidade atual.');
+    }
+
+    if ($appointment->status !== 'in_progress') {
+        return back()->with(
+            'error',
+            'Somente atendimentos em andamento podem ser finalizados.'
+        );
+    }
+
+    $appointment->update([
+        'status' => 'completed',
+        'completed_at' => now(),
+    ]);
+
+    return back()->with('success', 'Atendimento finalizado.');
+}
+
+/**
+ * Confirma o agendamento.
+ */
+public function confirm(
+    Request $request,
+    Appointment $appointment
+): RedirectResponse {
+    $context = $this->activeContext($request);
+
+    if (
+        ! $context
+        || $appointment->network_id !== $context->network_id
+        || $appointment->unit_id !== $context->unit_id
+    ) {
+        abort(403, 'Este agendamento não pertence à unidade atual.');
+    }
+
+    if ($appointment->status !== 'scheduled') {
+        return back()->with(
+            'error',
+            'Somente agendamentos pendentes podem ser confirmados.'
+        );
+    }
+
+    $appointment->update([
+        'status' => 'confirmed',
+        'confirmed_at' => now(),
+    ]);
+
+    return back()->with(
+        'success',
+        'Agendamento confirmado com sucesso.'
+    );
+}
+
+
+/**
+ * Cancela um agendamento.
+ */
+public function cancel(
+    Request $request,
+    Appointment $appointment
+): RedirectResponse {
+    $context = $this->activeContext($request);
+
+    if (
+        ! $context
+        || $appointment->network_id !== $context->network_id
+        || $appointment->unit_id !== $context->unit_id
+    ) {
+        abort(403, 'Este agendamento nÃ£o pertence Ã  unidade atual.');
+    }
+
+    if (! in_array($appointment->status, ['scheduled', 'confirmed'])) {
+        return back()->with(
+            'error',
+            'Este agendamento nÃ£o pode mais ser cancelado.'
+        );
+    }
+
+    $appointment->update([
+        'status' => 'cancelled',
+        'cancelled_at' => now(),
+        'cancelled_by_user_id' => $request->user()->id,
+    ]);
+
+    return back()->with(
+        'success',
+        'Agendamento cancelado com sucesso.'
+    );
+}
+
+
+/**
+ * Tela para reagendar um atendimento.
+ */
+public function reschedule(
+    Request $request,
+    Appointment $appointment
+): View {
+    $context = $this->activeContext($request);
+
+    if (
+        ! $context
+        || $appointment->network_id !== $context->network_id
+        || $appointment->unit_id !== $context->unit_id
+    ) {
+        abort(403, 'Este agendamento nÃ£o pertence Ã  unidade atual.');
+    }
+
+    if (! in_array($appointment->status, ['scheduled', 'confirmed'])) {
+        abort(422, 'Este agendamento nÃ£o pode ser reagendado.');
+    }
+
+    $appointment->load([
+        'patient',
+        'professional',
+        'schedule.specialtyRelation',
+    ]);
+
+    $schedules = Schedule::query()
+        ->with([
+            'professional',
+            'specialtyRelation',
+            'serviceLocation',
+        ])
+        ->where('network_id', $context->network_id)
+        ->where('unit_id', $context->unit_id)
+        ->where('active', true)
+        ->orderBy('professional_user_id')
+        ->orderBy('weekday')
+        ->orderBy('starts_at')
+        ->get();
+
+    return view('appointments.reschedule', [
+        'appointment' => $appointment,
+        'schedules' => $schedules,
+        'context' => $context,
+    ]);
+}
+
+/**
+ * Salva o reagendamento.
+ */
+public function updateSchedule(
+    Request $request,
+    Appointment $appointment
+): RedirectResponse {
+    $context = $this->activeContext($request);
+
+    if (
+        ! $context
+        || $appointment->network_id !== $context->network_id
+        || $appointment->unit_id !== $context->unit_id
+    ) {
+        abort(403, 'Este agendamento nÃ£o pertence Ã  unidade atual.');
+    }
+
+    if (! in_array($appointment->status, ['scheduled', 'confirmed'])) {
+        return back()->with(
+            'error',
+            'Este agendamento nÃ£o pode ser reagendado.'
+        );
+    }
+
+    $validated = $request->validate([
+        'schedule_id' => [
+            'required',
+            'integer',
+            'exists:schedules,id',
+        ],
+        'date' => [
+            'required',
+            'date',
+            'after_or_equal:today',
+        ],
+        'time' => [
+            'required',
+            'date_format:H:i',
+        ],
+    ]);
+
+    $schedule = Schedule::query()
+        ->whereKey($validated['schedule_id'])
+        ->where('network_id', $context->network_id)
+        ->where('unit_id', $context->unit_id)
+        ->where('active', true)
+        ->firstOrFail();
+
+    $date = Carbon::createFromFormat(
+        'Y-m-d',
+        $validated['date']
+    )->startOfDay();
+
+    if ($date->dayOfWeek !== (int) $schedule->weekday) {
+        throw ValidationException::withMessages([
+            'date' => 'A grade selecionada nÃ£o possui atendimento neste dia.',
+        ]);
+    }
+
+    if (
+        $date->lt($schedule->starts_on->startOfDay())
+        || (
+            $schedule->ends_on
+            && $date->gt($schedule->ends_on->startOfDay())
+        )
+    ) {
+        throw ValidationException::withMessages([
+            'date' => 'A data estÃ¡ fora da validade desta grade.',
+        ]);
+    }
+
+    $startsAt = Carbon::createFromFormat(
+        'Y-m-d H:i',
+        $validated['date'].' '.$validated['time']
+    );
+
+    $scheduleStartsAt = Carbon::createFromFormat(
+        'Y-m-d H:i:s',
+        $validated['date'].' '.$schedule->starts_at
+    );
+
+    $scheduleEndsAt = Carbon::createFromFormat(
+        'Y-m-d H:i:s',
+        $validated['date'].' '.$schedule->ends_at
+    );
+
+    $endsAt = $startsAt
+        ->copy()
+        ->addMinutes($schedule->slot_duration_minutes);
+
+    if (
+        $startsAt->lt($scheduleStartsAt)
+        || $endsAt->gt($scheduleEndsAt)
+    ) {
+        throw ValidationException::withMessages([
+            'time' => 'O horÃ¡rio estÃ¡ fora da grade selecionada.',
+        ]);
+    }
+
+    $minutesFromStart = $scheduleStartsAt->diffInMinutes(
+        $startsAt,
+        false
+    );
+
+    if (
+        $minutesFromStart < 0
+        || $minutesFromStart % $schedule->slot_duration_minutes !== 0
+    ) {
+        throw ValidationException::withMessages([
+            'time' => 'O horÃ¡rio nÃ£o corresponde a um intervalo vÃ¡lido da grade.',
+        ]);
+    }
+
+    DB::transaction(function () use (
+        $appointment,
+        $schedule,
+        $startsAt,
+        $endsAt
+    ) {
+        Schedule::query()
+            ->whereKey($schedule->id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        $appointmentsAtSlot = Appointment::query()
+            ->where('schedule_id', $schedule->id)
+            ->where('starts_at', $startsAt)
+            ->whereKeyNot($appointment->id)
+            ->whereNotIn('status', [
+                'cancelled',
+                'no_show',
+            ])
+            ->count();
+
+        if ($appointmentsAtSlot >= $schedule->slot_capacity) {
+            throw ValidationException::withMessages([
+                'time' => 'Este horÃ¡rio nÃ£o possui mais vagas disponÃ­veis.',
+            ]);
+        }
+
+        $appointment->update([
+            'schedule_id' => $schedule->id,
+            'professional_user_id' => $schedule->professional_user_id,
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+
+            // Reagendamento volta para pendente de confirmaÃ§Ã£o.
+            'status' => 'scheduled',
+            'confirmed_at' => null,
+            'checked_in_at' => null,
+        ]);
+    });
+
+    return redirect()
+        ->route('appointments.index', [
+            'date' => $startsAt->format('Y-m-d'),
+        ])
+        ->with(
+            'success',
+            'Agendamento reagendado com sucesso.'
+        );
+}
+
 }

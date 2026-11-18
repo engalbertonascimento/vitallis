@@ -23,7 +23,7 @@
         </h1>
 
         <p class="mt-1 text-sm text-slate-500">
-            Defina quando o profissional estará disponível para receber agendamentos.
+            Defina quando e onde o profissional estará disponível para atendimento.
         </p>
 
     </div>
@@ -77,17 +77,65 @@
     </section>
 
 
-    @if($professionals->isEmpty())
+    {{-- Dependências --}}
+    @if($professionals->isEmpty() || $specialties->isEmpty() || $serviceLocations->isEmpty())
 
         <section class="rounded-xl border border-amber-200 bg-amber-50 p-6">
 
             <h2 class="font-semibold text-amber-900">
-                Nenhum profissional disponível
+                Cadastros necessários
             </h2>
 
             <p class="mt-2 text-sm text-amber-700">
-                Não existem usuários ativos vinculados a esta unidade ou à sua rede.
+                Antes de criar uma grade, verifique os itens abaixo.
             </p>
+
+            <div class="mt-4 space-y-2 text-sm">
+
+                <p class="{{ $professionals->isEmpty() ? 'text-red-700' : 'text-emerald-700' }}">
+                    {{ $professionals->isEmpty() ? '✕' : '✓' }}
+                    Profissional vinculado à unidade
+                </p>
+
+                <p class="{{ $specialties->isEmpty() ? 'text-red-700' : 'text-emerald-700' }}">
+                    {{ $specialties->isEmpty() ? '✕' : '✓' }}
+                    Especialidade ativa
+                </p>
+
+                <p class="{{ $serviceLocations->isEmpty() ? 'text-red-700' : 'text-emerald-700' }}">
+                    {{ $serviceLocations->isEmpty() ? '✕' : '✓' }}
+                    Local de atendimento ativo
+                </p>
+
+            </div>
+
+
+            <div class="mt-5 flex flex-wrap gap-3">
+
+                @if($specialties->isEmpty() && auth()->user()->hasPermission('specialties.manage'))
+
+                    <a
+                        href="{{ route('specialties.create') }}"
+                        class="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-800"
+                    >
+                        Cadastrar especialidade
+                    </a>
+
+                @endif
+
+
+                @if($serviceLocations->isEmpty() && auth()->user()->hasPermission('service_locations.manage'))
+
+                    <a
+                        href="{{ route('service-locations.create') }}"
+                        class="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-800"
+                    >
+                        Cadastrar local
+                    </a>
+
+                @endif
+
+            </div>
 
         </section>
 
@@ -102,17 +150,17 @@
             @csrf
 
 
-            {{-- Profissional --}}
+            {{-- Atendimento --}}
             <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-200 px-6 py-5">
 
                     <h2 class="font-semibold text-slate-900">
-                        Profissional
+                        Atendimento
                     </h2>
 
                     <p class="mt-1 text-sm text-slate-500">
-                        Selecione o profissional responsável pelos atendimentos desta grade.
+                        Defina o profissional, especialidade e local onde os atendimentos ocorrerão.
                     </p>
 
                 </div>
@@ -120,6 +168,7 @@
 
                 <div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
 
+                    {{-- Profissional --}}
                     <div class="md:col-span-2">
 
                         <label
@@ -146,8 +195,7 @@
                                     value="{{ $professional->id }}"
                                     @selected(
                                         (string) old('professional_user_id')
-                                        ===
-                                        (string) $professional->id
+                                        === (string) $professional->id
                                     )
                                 >
                                     {{ $professional->name }}
@@ -167,7 +215,8 @@
                     </div>
 
 
-                    <div>
+                    {{-- Nome da agenda --}}
+                    <div class="md:col-span-2">
 
                         <label
                             for="name"
@@ -182,38 +231,126 @@
                             type="text"
                             maxlength="255"
                             value="{{ old('name') }}"
-                            placeholder="Ex.: Ambulatório Cardiologia"
+                            placeholder="Ex.: Ambulatório de Cardiologia"
                             class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                         >
 
+                        <p class="mt-2 text-xs text-slate-400">
+                            O nome pode ser personalizado. Especialidade e local são cadastros padronizados.
+                        </p>
+
                         @error('name')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-sm text-red-600">
+                                {{ $message }}
+                            </p>
                         @enderror
 
                     </div>
 
 
+                    {{-- Especialidade --}}
                     <div>
 
                         <label
-                            for="specialty"
+                            for="specialty_id"
                             class="mb-2 block text-sm font-medium text-slate-700"
                         >
-                            Especialidade
+                            Especialidade *
                         </label>
 
-                        <input
-                            id="specialty"
-                            name="specialty"
-                            type="text"
-                            maxlength="255"
-                            value="{{ old('specialty') }}"
-                            placeholder="Ex.: Cardiologia"
-                            class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                        <select
+                            id="specialty_id"
+                            name="specialty_id"
+                            required
+                            class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                         >
 
-                        @error('specialty')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <option value="">
+                                Selecione a especialidade
+                            </option>
+
+                            @foreach($specialties as $specialty)
+
+                                <option
+                                    value="{{ $specialty->id }}"
+                                    @selected(
+                                        (string) old('specialty_id')
+                                        === (string) $specialty->id
+                                    )
+                                >
+                                    {{ $specialty->name }}
+
+                                    @if($specialty->code)
+                                        - {{ $specialty->code }}
+                                    @endif
+                                </option>
+
+                            @endforeach
+
+                        </select>
+
+                        @error('specialty_id')
+                            <p class="mt-2 text-sm text-red-600">
+                                {{ $message }}
+                            </p>
+                        @enderror
+
+                    </div>
+
+
+                    {{-- Local --}}
+                    <div>
+
+                        <label
+                            for="service_location_id"
+                            class="mb-2 block text-sm font-medium text-slate-700"
+                        >
+                            Local de atendimento *
+                        </label>
+
+                        <select
+                            id="service_location_id"
+                            name="service_location_id"
+                            required
+                            class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                        >
+
+                            <option value="">
+                                Selecione o local
+                            </option>
+
+                            @foreach($serviceLocations as $location)
+
+                                <option
+                                    value="{{ $location->id }}"
+                                    @selected(
+                                        (string) old('service_location_id')
+                                        === (string) $location->id
+                                    )
+                                >
+                                    {{ $location->name }}
+
+                                    @if($location->parent)
+                                        - {{ $location->parent->name }}
+                                    @endif
+
+                                    @if($location->code)
+                                        [{{ $location->code }}]
+                                    @endif
+                                </option>
+
+                            @endforeach
+
+                        </select>
+
+                        <p class="mt-2 text-xs text-slate-400">
+                            Somente locais ativos da unidade atual são exibidos.
+                        </p>
+
+                        @error('service_location_id')
+                            <p class="mt-2 text-sm text-red-600">
+                                {{ $message }}
+                            </p>
                         @enderror
 
                     </div>
@@ -223,7 +360,7 @@
             </section>
 
 
-            {{-- Período --}}
+            {{-- Período e recorrência --}}
             <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-200 px-6 py-5">
@@ -233,7 +370,7 @@
                     </h2>
 
                     <p class="mt-1 text-sm text-slate-500">
-                        Defina a validade e o dia semanal desta grade.
+                        Defina a validade e o dia semanal da grade.
                     </p>
 
                 </div>
@@ -260,7 +397,9 @@
                         >
 
                         @error('starts_on')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-sm text-red-600">
+                                {{ $message }}
+                            </p>
                         @enderror
 
                     </div>
@@ -288,7 +427,9 @@
                         </p>
 
                         @error('ends_on')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-sm text-red-600">
+                                {{ $message }}
+                            </p>
                         @enderror
 
                     </div>
@@ -314,38 +455,38 @@
                                 Selecione
                             </option>
 
-                            <option value="1" @selected(old('weekday') === '1')>
-                                Segunda-feira
-                            </option>
+                            @php
+                                $weekdays = [
+                                    1 => 'Segunda-feira',
+                                    2 => 'Terça-feira',
+                                    3 => 'Quarta-feira',
+                                    4 => 'Quinta-feira',
+                                    5 => 'Sexta-feira',
+                                    6 => 'Sábado',
+                                    0 => 'Domingo',
+                                ];
+                            @endphp
 
-                            <option value="2" @selected(old('weekday') === '2')>
-                                Terça-feira
-                            </option>
+                            @foreach($weekdays as $weekdayValue => $weekdayLabel)
 
-                            <option value="3" @selected(old('weekday') === '3')>
-                                Quarta-feira
-                            </option>
+                                <option
+                                    value="{{ $weekdayValue }}"
+                                    @selected(
+                                        (string) old('weekday')
+                                        === (string) $weekdayValue
+                                    )
+                                >
+                                    {{ $weekdayLabel }}
+                                </option>
 
-                            <option value="4" @selected(old('weekday') === '4')>
-                                Quinta-feira
-                            </option>
-
-                            <option value="5" @selected(old('weekday') === '5')>
-                                Sexta-feira
-                            </option>
-
-                            <option value="6" @selected(old('weekday') === '6')>
-                                Sábado
-                            </option>
-
-                            <option value="0" @selected(old('weekday') === '0')>
-                                Domingo
-                            </option>
+                            @endforeach
 
                         </select>
 
                         @error('weekday')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-sm text-red-600">
+                                {{ $message }}
+                            </p>
                         @enderror
 
                     </div>
@@ -365,7 +506,7 @@
                     </h2>
 
                     <p class="mt-1 text-sm text-slate-500">
-                        Configure o período de atendimento e a duração de cada horário.
+                        Configure o período de atendimento e a duração de cada vaga.
                     </p>
 
                 </div>
@@ -391,10 +532,6 @@
                             class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                         >
 
-                        @error('starts_at')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-
                     </div>
 
 
@@ -415,10 +552,6 @@
                             value="{{ old('ends_at', '12:00') }}"
                             class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                         >
-
-                        @error('ends_at')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
 
                     </div>
 
@@ -457,10 +590,6 @@
 
                         </select>
 
-                        @error('slot_duration_minutes')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-
                     </div>
 
 
@@ -485,73 +614,29 @@
                         >
 
                         <p class="mt-2 text-xs text-slate-400">
-                            Número máximo de pacientes por horário.
+                            Pacientes permitidos por horário.
                         </p>
-
-                        @error('slot_capacity')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
 
                     </div>
 
                 </div>
 
-            </section>
 
+                {{-- Prévia --}}
+                <div class="border-t border-slate-200 bg-blue-50 px-6 py-5">
 
-            {{-- Local --}}
-            <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <p class="text-sm font-medium text-blue-900">
+                        Prévia dos horários
+                    </p>
 
-                <div class="border-b border-slate-200 px-6 py-5">
-
-                    <h2 class="font-semibold text-slate-900">
-                        Local do atendimento
-                    </h2>
+                    <p
+                        id="schedule-preview"
+                        class="mt-2 text-sm leading-relaxed text-blue-700"
+                    >
+                        Configure o período para visualizar os horários.
+                    </p>
 
                 </div>
-
-
-                <div class="p-6">
-
-                    <label
-                        for="room"
-                        class="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                        Sala / consultório
-                    </label>
-
-                    <input
-                        id="room"
-                        name="room"
-                        type="text"
-                        maxlength="255"
-                        value="{{ old('room') }}"
-                        placeholder="Ex.: Consultório 03"
-                        class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                    >
-
-                    @error('room')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-
-                </div>
-
-            </section>
-
-
-            {{-- Prévia --}}
-            <section class="rounded-xl border border-blue-100 bg-blue-50 p-5">
-
-                <h2 class="font-semibold text-blue-900">
-                    Prévia dos horários
-                </h2>
-
-                <p
-                    id="schedule-preview"
-                    class="mt-2 text-sm leading-relaxed text-blue-700"
-                >
-                    Configure os horários acima para visualizar a grade.
-                </p>
 
             </section>
 
@@ -568,7 +653,7 @@
                         </p>
 
                         <p class="mt-1 text-xs text-slate-500">
-                            Os horários serão disponibilizados para usuários com permissão de criar agendamentos.
+                            Os horários ficarão disponíveis para usuários autorizados a criar agendamentos.
                         </p>
 
                     </div>
@@ -634,8 +719,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return null;
         }
 
-        const parts =
-            value.split(':');
+        const parts = value.split(':');
 
         return (
             parseInt(parts[0], 10) * 60
@@ -680,7 +764,7 @@ document.addEventListener('DOMContentLoaded', function () {
             end <= start
         ) {
             preview.textContent =
-                'Informe um horário inicial, final e duração válidos.';
+                'Informe um período e uma duração válidos.';
 
             return;
         }
@@ -706,7 +790,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         preview.textContent =
             slots.length
-            + ' horários: '
+            + (
+                slots.length === 1
+                    ? ' horário: '
+                    : ' horários: '
+            )
             + slots.join(', ');
     }
 
@@ -725,7 +813,6 @@ document.addEventListener('DOMContentLoaded', function () {
         'change',
         updatePreview
     );
-
 
     updatePreview();
 
