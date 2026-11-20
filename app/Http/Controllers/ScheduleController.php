@@ -67,7 +67,7 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Formul·rio para criaÁ„o de grade.
+     * Formul√°rio para cria√ß√£o de grade.
      */
     public function create(Request $request): View
     {
@@ -104,8 +104,8 @@ class ScheduleController extends Controller
             ]);
 
         /*
-         * Um local de atendimento sÛ pode ser selecionado
-         * se pertencer ‡ unidade ativa.
+         * Um local de atendimento s√≥ pode ser selecionado
+         * se pertencer √† unidade ativa.
          */
         $serviceLocations = ServiceLocation::query()
             ->with('parent')
@@ -206,7 +206,7 @@ class ScheduleController extends Controller
             /*
              * Campos legados.
              *
-             * As novas grades n„o gravam mais especialidade
+             * As novas grades n√£o gravam mais especialidade
              * ou local como texto livre.
              */
             'specialty' => null,
@@ -245,7 +245,7 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Formul·rio de ediÁ„o da grade.
+     * Formul√°rio de edi√ß√£o da grade.
      */
     public function edit(
         Request $request,
@@ -405,7 +405,7 @@ class ScheduleController extends Controller
     }
 
     /**
-     * ValidaÁ„o principal da grade.
+     * Valida√ß√£o principal da grade.
      */
     private function validateSchedule(
         Request $request
@@ -479,7 +479,7 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Valida o perÌodo di·rio da grade.
+     * Valida o per√≠odo di√°rio da grade.
      */
     private function validateSchedulePeriod(
         array $validated
@@ -490,7 +490,7 @@ class ScheduleController extends Controller
         ) {
             throw ValidationException::withMessages([
                 'ends_at' =>
-                    'O hor·rio final deve ser posterior ao hor·rio inicial.',
+                    'O hor√°rio final deve ser posterior ao hor√°rio inicial.',
             ]);
         }
 
@@ -511,7 +511,7 @@ class ScheduleController extends Controller
         ) {
             throw ValidationException::withMessages([
                 'slot_duration_minutes' =>
-                    'A duraÁ„o do atendimento È maior que o perÌodo disponÌvel na grade.',
+                    'A dura√ß√£o do atendimento √© maior que o per√≠odo dispon√≠vel na grade.',
             ]);
         }
     }
@@ -534,7 +534,7 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Confirma que o profissional est· disponÌvel
+     * Confirma que o profissional est√° dispon√≠vel
      * no contexto da unidade atual.
      */
     private function validateProfessionalAccess(
@@ -568,13 +568,13 @@ class ScheduleController extends Controller
         if (! $professionalHasAccess) {
             throw ValidationException::withMessages([
                 'professional_user_id' =>
-                    'O profissional selecionado n„o possui vÌnculo ativo com esta unidade.',
+                    'O profissional selecionado n√£o possui v√≠nculo ativo com esta unidade.',
             ]);
         }
     }
 
     /**
-     * Confirma que a especialidade est· ativa.
+     * Confirma que a especialidade est√° ativa.
      */
     private function validateSpecialty(
         int $specialtyId
@@ -587,13 +587,13 @@ class ScheduleController extends Controller
         if (! $specialtyExists) {
             throw ValidationException::withMessages([
                 'specialty_id' =>
-                    'A especialidade selecionada n„o est· disponÌvel.',
+                    'A especialidade selecionada n√£o est√° dispon√≠vel.',
             ]);
         }
     }
 
     /**
-     * Confirma que o local pertence ‡ unidade ativa.
+     * Confirma que o local pertence √† unidade ativa.
      */
     private function validateServiceLocation(
         int $serviceLocationId,
@@ -611,13 +611,13 @@ class ScheduleController extends Controller
         if (! $locationExists) {
             throw ValidationException::withMessages([
                 'service_location_id' =>
-                    'O local de atendimento selecionado n„o pertence ‡ unidade atual.',
+                    'O local de atendimento selecionado n√£o pertence √† unidade atual.',
             ]);
         }
     }
 
     /**
-     * Protege ediÁ„o direta por URL.
+     * Protege edi√ß√£o direta por URL.
      */
     private function authorizeScheduleContext(
         Schedule $schedule,
@@ -644,7 +644,7 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Retorna os profissionais disponÌveis no contexto.
+     * Retorna os profissionais dispon√≠veis no contexto.
      */
     private function professionalsForContext(
         object $context

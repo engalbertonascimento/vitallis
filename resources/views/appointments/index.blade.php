@@ -580,23 +580,36 @@
                                                 $user->hasPermission('appointments.start')
                                                 && $appointment->status === 'waiting'
                                             )
-
+                                            
                                                 <form
                                                     method="POST"
                                                     action="{{ route('appointments.start', $appointment) }}"
+                                                    class="shrink-0"
                                                 >
                                                     @csrf
                                                     @method('PATCH')
-
+                                            
                                                     <button
                                                         type="submit"
-                                                        class="whitespace-nowrap rounded-lg bg-violet-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-violet-800"
+                                                        style="
+                                                            background-color: #6d28d9;
+                                                            color: #ffffff;
+                                                            border: 1px solid #5b21b6;
+                                                            padding: 10px 16px;
+                                                            border-radius: 8px;
+                                                            font-size: 13px;
+                                                            font-weight: 700;
+                                                            line-height: 20px;
+                                                            white-space: nowrap;
+                                                            cursor: pointer;
+                                                            min-width: 170px;
+                                                        "
                                                     >
                                                         Iniciar atendimento
                                                     </button>
-
+                                            
                                                 </form>
-
+                                            
                                             @endif
 
                                             {{-- Finalizar atendimento --}}

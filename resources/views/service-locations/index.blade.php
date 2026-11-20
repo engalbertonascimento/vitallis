@@ -2,7 +2,7 @@
 
 @section('title', 'Locais de Atendimento | Vitallis')
 @section('header', 'Locais de Atendimento')
-@section('subtitle', 'Estrutura física e assistencial da unidade')
+@section('subtitle', 'Estrutura fÃ­sica e assistencial da unidade')
 
 @section('content')
 
@@ -22,7 +22,7 @@
 
 <div class="space-y-6">
 
-    {{-- Cabeçalho --}}
+    {{-- CabeÃ§alho --}}
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
         <div>
@@ -32,7 +32,7 @@
             </h1>
 
             <p class="mt-1 text-sm text-slate-500">
-                Gerencie blocos, andares, alas, setores, salas, consultórios e demais locais da unidade.
+                Gerencie blocos, andares, alas, setores, salas, consultÃ³rios e demais locais da unidade.
             </p>
 
         </div>
@@ -71,7 +71,7 @@
         @endif
 
         <p class="mt-3 text-xs text-emerald-700">
-            Os locais abaixo pertencem exclusivamente à unidade atualmente selecionada.
+            Os locais abaixo pertencem exclusivamente Ã  unidade atualmente selecionada.
         </p>
 
     </section>
@@ -118,7 +118,7 @@
                     name="search"
                     type="text"
                     value="{{ $search }}"
-                    placeholder="Pesquisar por nome, código ou descrição..."
+                    placeholder="Pesquisar por nome, cÃ³digo ou descriÃ§Ã£o..."
                     class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                 >
 
@@ -216,7 +216,7 @@
                 </h3>
 
                 <p class="mx-auto mt-2 max-w-lg text-sm text-slate-500">
-                    Comece cadastrando a estrutura física da unidade.
+                    Comece cadastrando a estrutura fÃ­sica da unidade.
                 </p>
 
 
@@ -252,7 +252,7 @@
                             </th>
 
                             <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Código
+                                CÃ³digo
                             </th>
 
                             <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -264,7 +264,7 @@
                             </th>
 
                             <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Ações
+                                AÃ§Ãµes
                             </th>
 
                         </tr>
@@ -317,7 +317,7 @@
                                     @else
 
                                         <span class="text-sm text-slate-400">
-                                            Não informado
+                                            NÃ£o informado
                                         </span>
 
                                     @endif

@@ -2,13 +2,13 @@
 
 @section('title', 'Demais Cadastros | Vitallis')
 @section('header', 'Demais Cadastros')
-@section('subtitle', 'Cadastros auxiliares e parametrizações do sistema')
+@section('subtitle', 'Cadastros auxiliares e parametrizaÃ§Ãµes do sistema')
 
 @section('content')
 
 <div class="space-y-6">
 
-    {{-- Cabeçalho --}}
+    {{-- CabeÃ§alho --}}
     <div>
 
         <h1 class="text-2xl font-semibold text-slate-900">
@@ -16,23 +16,23 @@
         </h1>
 
         <p class="mt-1 text-sm text-slate-500">
-            Gerencie cadastros padronizados utilizados pelos módulos assistenciais e administrativos do Vitallis.
+            Gerencie cadastros padronizados utilizados pelos mÃ³dulos assistenciais e administrativos do Vitallis.
         </p>
 
     </div>
 
 
-    {{-- Informação --}}
+    {{-- InformaÃ§Ã£o --}}
     <div class="rounded-xl border border-blue-100 bg-blue-50 p-5">
 
         <h2 class="font-semibold text-blue-900">
-            Padronização de dados
+            PadronizaÃ§Ã£o de dados
         </h2>
 
         <p class="mt-2 text-sm leading-relaxed text-blue-700">
-            Estes cadastros evitam informações livres e divergentes,
-            garantindo consistência para agendas, atendimentos,
-            filtros, integrações e relatórios.
+            Estes cadastros evitam informaÃ§Ãµes livres e divergentes,
+            garantindo consistÃªncia para agendas, atendimentos,
+            filtros, integraÃ§Ãµes e relatÃ³rios.
         </p>
 
     </div>
@@ -78,7 +78,7 @@
                         </p>
 
                         <p class="mt-2 text-sm text-slate-600">
-                            Cardiologia, Clínica Médica, Ortopedia,
+                            Cardiologia, ClÃ­nica MÃ©dica, Ortopedia,
                             Pediatria, Neurologia.
                         </p>
 
@@ -119,8 +119,8 @@
                             </h2>
 
                             <p class="mt-2 text-sm leading-relaxed text-slate-500">
-                                Estruture os locais físicos da unidade de forma
-                                hierárquica e padronizada.
+                                Estruture os locais fÃ­sicos da unidade de forma
+                                hierÃ¡rquica e padronizada.
                             </p>
 
                         </div>
@@ -139,8 +139,8 @@
                         </p>
 
                         <p class="mt-2 text-sm text-slate-600">
-                            Edifícios, blocos, andares, alas, setores,
-                            salas, consultórios e leitos.
+                            EdifÃ­cios, blocos, andares, alas, setores,
+                            salas, consultÃ³rios e leitos.
                         </p>
 
                     </div>
@@ -164,7 +164,7 @@
         @endif
 
 
-        {{-- Espaço preparado para futuros cadastros --}}
+        {{-- EspaÃ§o preparado para futuros cadastros --}}
         <article class="flex flex-col rounded-xl border border-dashed border-slate-300 bg-slate-50">
 
             <div class="flex-1 p-6">
@@ -174,7 +174,7 @@
                 </h2>
 
                 <p class="mt-2 text-sm leading-relaxed text-slate-500">
-                    Outros cadastros parametrizáveis do Vitallis serão organizados nesta área.
+                    Outros cadastros parametrizÃ¡veis do Vitallis serÃ£o organizados nesta Ã¡rea.
                 </p>
 
 
@@ -185,7 +185,7 @@
                     </span>
 
                     <span class="rounded-full bg-white px-3 py-1 text-xs text-slate-500">
-                        Convênios
+                        ConvÃªnios
                     </span>
 
                     <span class="rounded-full bg-white px-3 py-1 text-xs text-slate-500">

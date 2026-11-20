@@ -17,13 +17,13 @@ class ServiceLocationController extends Controller
      * Tipos de locais suportados pelo Vitallis.
      */
     private const LOCATION_TYPES = [
-        'building' => 'EdifÌcio',
+        'building' => 'Edif√≠cio',
         'block' => 'Bloco',
         'floor' => 'Andar',
         'wing' => 'Ala',
         'sector' => 'Setor',
         'room' => 'Sala',
-        'office' => 'ConsultÛrio',
+        'office' => 'Consult√≥rio',
         'bed' => 'Leito',
         'other' => 'Outro',
     ];
@@ -116,7 +116,7 @@ class ServiceLocationController extends Controller
     }
 
     /**
-     * Formul·rio de criaÁ„o.
+     * Formul√°rio de cria√ß√£o.
      */
     public function create(Request $request): View
     {
@@ -139,8 +139,8 @@ class ServiceLocationController extends Controller
             ->firstOrFail();
 
         /*
-         * Um local sÛ pode ter como pai outro local
-         * pertencente ‡ mesma unidade.
+         * Um local s√≥ pode ter como pai outro local
+         * pertencente √† mesma unidade.
          */
         $parents = ServiceLocation::query()
             ->where(
@@ -250,7 +250,7 @@ class ServiceLocationController extends Controller
             if (! $parentExists) {
                 throw ValidationException::withMessages([
                     'parent_id' =>
-                        'O local superior selecionado n„o pertence ‡ unidade atual.',
+                        'O local superior selecionado n√£o pertence √† unidade atual.',
                 ]);
             }
         }
@@ -262,7 +262,7 @@ class ServiceLocationController extends Controller
             : null;
 
         /*
-         * CÛdigo È ˙nico dentro da unidade.
+         * C√≥digo √© √∫nico dentro da unidade.
          */
         if (
             $code !== null
@@ -279,7 +279,7 @@ class ServiceLocationController extends Controller
         ) {
             throw ValidationException::withMessages([
                 'code' =>
-                    'J· existe um local com este cÛdigo nesta unidade.',
+                    'J√° existe um local com este c√≥digo nesta unidade.',
             ]);
         }
 
@@ -305,7 +305,7 @@ class ServiceLocationController extends Controller
     }
 
     /**
-     * Formul·rio de ediÁ„o.
+     * Formul√°rio de edi√ß√£o.
      */
     public function edit(
         Request $request,
@@ -323,7 +323,7 @@ class ServiceLocationController extends Controller
             );
 
         /*
-         * Impede selecionar o prÛprio registro como pai.
+         * Impede selecionar o pr√≥prio registro como pai.
          */
         $parents = ServiceLocation::query()
             ->where(
@@ -418,7 +418,7 @@ class ServiceLocationController extends Controller
         ) {
             throw ValidationException::withMessages([
                 'parent_id' =>
-                    'Um local n„o pode ser superior de si mesmo.',
+                    'Um local n√£o pode ser superior de si mesmo.',
             ]);
         }
 
@@ -435,7 +435,7 @@ class ServiceLocationController extends Controller
             if (! $parent) {
                 throw ValidationException::withMessages([
                     'parent_id' =>
-                        'O local superior selecionado n„o pertence ‡ mesma unidade.',
+                        'O local superior selecionado n√£o pertence √† mesma unidade.',
                 ]);
             }
 
@@ -453,7 +453,7 @@ class ServiceLocationController extends Controller
             ) {
                 throw ValidationException::withMessages([
                     'parent_id' =>
-                        'Esta seleÁ„o criaria um ciclo na hierarquia dos locais.',
+                        'Esta sele√ß√£o criaria um ciclo na hierarquia dos locais.',
                 ]);
             }
         }
@@ -484,7 +484,7 @@ class ServiceLocationController extends Controller
         ) {
             throw ValidationException::withMessages([
                 'code' =>
-                    'J· existe outro local com este cÛdigo nesta unidade.',
+                    'J√° existe outro local com este c√≥digo nesta unidade.',
             ]);
         }
 
@@ -520,7 +520,7 @@ class ServiceLocationController extends Controller
         );
 
         /*
-         * N„o desativa um pai enquanto possuir
+         * N√£o desativa um pai enquanto possuir
          * filhos ativos abaixo dele.
          */
         if (
@@ -532,7 +532,7 @@ class ServiceLocationController extends Controller
         ) {
             return back()->withErrors([
                 'location' =>
-                    'Este local possui locais filhos ativos. Desative primeiro os nÌveis inferiores.',
+                    'Este local possui locais filhos ativos. Desative primeiro os n√≠veis inferiores.',
             ]);
         }
 
@@ -553,7 +553,7 @@ class ServiceLocationController extends Controller
 
     /**
      * Confirma que o registro pertence
-     * ao contexto ativo do usu·rio.
+     * ao contexto ativo do usu√°rio.
      */
     private function authorizeLocationContext(
         Request $request,
@@ -583,7 +583,7 @@ class ServiceLocationController extends Controller
 
     /**
      * Verifica se trocar o pai criaria
-     * um ciclo na ·rvore de locais.
+     * um ciclo na √°rvore de locais.
      */
     private function wouldCreateCycle(
         ServiceLocation $location,

@@ -30,7 +30,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * Conversıes dos atributos.
+     * Convers√µes dos atributos.
      *
      * @return array<string, string>
      */
@@ -44,13 +44,13 @@ class User extends Authenticatable
     }
 
     /**
-     * PapÈis atribuÌdos ao usu·rio.
+     * Pap√©is atribu√≠dos ao usu√°rio.
      *
-     * O vÌnculo armazena:
-     * - funÁ„o;
+     * O v√≠nculo armazena:
+     * - fun√ß√£o;
      * - rede;
      * - unidade;
-     * - situaÁ„o do vÌnculo.
+     * - situa√ß√£o do v√≠nculo.
      */
     public function roles(): BelongsToMany
     {
@@ -64,12 +64,12 @@ class User extends Authenticatable
     }
 
     /**
-     * Verifica se o usu·rio possui determinado papel ativo.
+     * Verifica se o usu√°rio possui determinado papel ativo.
      *
      * Quando rede e unidade forem informadas, considera:
      *
-     * - vÌnculo especÌfico da unidade;
-     * - vÌnculo v·lido para toda a rede, com unit_id NULL.
+     * - v√≠nculo espec√≠fico da unidade;
+     * - v√≠nculo v√°lido para toda a rede, com unit_id NULL.
      */
     public function hasRole(
         string $roleSlug,
@@ -127,14 +127,14 @@ class User extends Authenticatable
     }
 
     /**
-     * Verifica se o usu·rio possui uma permiss„o efetiva.
+     * Verifica se o usu√°rio possui uma permiss√£o efetiva.
      *
-     * Ordem de precedÍncia:
+     * Ordem de preced√™ncia:
      *
      * 1. Administrador Vitallis;
-     * 2. Override individual do usu·rio;
-     * 3. Override da funÁ„o na unidade;
-     * 4. Permiss„o padr„o da funÁ„o;
+     * 2. Override individual do usu√°rio;
+     * 3. Override da fun√ß√£o na unidade;
+     * 4. Permiss√£o padr√£o da fun√ß√£o;
      * 5. Negado.
      */
     public function hasPermission(
@@ -143,7 +143,7 @@ class User extends Authenticatable
         ?int $unitId = null
     ): bool {
         /*
-         * Usu·rios inativos n„o possuem acesso.
+         * Usu√°rios inativos n√£o possuem acesso.
          */
         if (! $this->active) {
             return false;
@@ -157,8 +157,8 @@ class User extends Authenticatable
         }
 
         /*
-         * Quando o contexto n„o È informado explicitamente,
-         * utiliza a unidade ativa da sess„o ou user_contexts.
+         * Quando o contexto n√£o √© informado explicitamente,
+         * utiliza a unidade ativa da sess√£o ou user_contexts.
          */
         $context = $this->resolvePermissionContext(
             $networkId,
@@ -169,8 +169,8 @@ class User extends Authenticatable
         $unitId = $context['unit_id'];
 
         /*
-         * Usu·rio operacional sem contexto ativo n„o recebe
-         * permissıes de unidade por seguranÁa.
+         * Usu√°rio operacional sem contexto ativo n√£o recebe
+         * permiss√µes de unidade por seguran√ßa.
          */
         if (
             $networkId === null
@@ -180,7 +180,7 @@ class User extends Authenticatable
         }
 
         /*
-         * Confirma que a permiss„o existe.
+         * Confirma que a permiss√£o existe.
          */
         $permission = DB::table('permissions')
             ->where(
@@ -198,9 +198,9 @@ class User extends Authenticatable
         $permissionId = (int) $permission->id;
 
         /*
-         * 1. Override individual do usu·rio.
+         * 1. Override individual do usu√°rio.
          *
-         * A regra mais especÌfica tem precedÍncia.
+         * A regra mais espec√≠fica tem preced√™ncia.
          */
         $userOverride = DB::table(
             'user_permission_overrides'
@@ -226,13 +226,13 @@ class User extends Authenticatable
         }
 
         /*
-         * Localiza todas as funÁıes ativas aplic·veis
+         * Localiza todas as fun√ß√µes ativas aplic√°veis
          * ao contexto atual.
          *
          * Um papel pode estar:
          *
-         * - vinculado especificamente ‡ unidade;
-         * - vinculado ‡ rede inteira, com unit_id NULL.
+         * - vinculado especificamente √† unidade;
+         * - vinculado √† rede inteira, com unit_id NULL.
          */
         $roleIds = $this->roleIdsForContext(
             $networkId,
@@ -244,11 +244,11 @@ class User extends Authenticatable
         }
 
         /*
-         * 2. Overrides da funÁ„o na unidade.
+         * 2. Overrides da fun√ß√£o na unidade.
          *
-         * Cada override pertence a uma funÁ„o especÌfica.
-         * Uma negaÁ„o em uma funÁ„o n„o elimina uma permiss„o
-         * concedida por outra funÁ„o ativa do usu·rio.
+         * Cada override pertence a uma fun√ß√£o espec√≠fica.
+         * Uma nega√ß√£o em uma fun√ß√£o n√£o elimina uma permiss√£o
+         * concedida por outra fun√ß√£o ativa do usu√°rio.
          */
         $roleOverrides = DB::table(
             'unit_permission_overrides'
@@ -276,13 +276,13 @@ class User extends Authenticatable
         /*
          * Avalia cada papel individualmente.
          *
-         * Para cada funÁ„o:
+         * Para cada fun√ß√£o:
          *
-         * - se existir override, ele substitui o padr„o;
-         * - caso contr·rio, verifica permission_role.
+         * - se existir override, ele substitui o padr√£o;
+         * - caso contr√°rio, verifica permission_role.
          *
-         * Como os papÈis s„o cumulativos, basta uma funÁ„o
-         * efetivamente permitir a aÁ„o.
+         * Como os pap√©is s√£o cumulativos, basta uma fun√ß√£o
+         * efetivamente permitir a a√ß√£o.
          */
         foreach ($roleIds as $roleId) {
             $roleId = (int) $roleId;
@@ -297,14 +297,14 @@ class User extends Authenticatable
                 }
 
                 /*
-                 * Override negado para esta funÁ„o.
-                 * Continua verificando outras funÁıes ativas.
+                 * Override negado para esta fun√ß√£o.
+                 * Continua verificando outras fun√ß√µes ativas.
                  */
                 continue;
             }
 
             /*
-             * 3. Permiss„o padr„o da funÁ„o.
+             * 3. Permiss√£o padr√£o da fun√ß√£o.
              */
             $defaultAllowed = DB::table(
                 'permission_role'
@@ -325,13 +325,13 @@ class User extends Authenticatable
         }
 
         /*
-         * Nenhuma funÁ„o permitiu a aÁ„o.
+         * Nenhuma fun√ß√£o permitiu a a√ß√£o.
          */
         return false;
     }
 
     /**
-     * Verifica se o usu·rio È administrador global.
+     * Verifica se o usu√°rio √© administrador global.
      */
     public function isVitallisAdmin(): bool
     {
@@ -341,8 +341,8 @@ class User extends Authenticatable
     }
 
     /**
-     * Retorna os IDs das funÁıes ativas aplic·veis
-     * ‡ rede e unidade atuais.
+     * Retorna os IDs das fun√ß√µes ativas aplic√°veis
+     * √† rede e unidade atuais.
      */
     private function roleIdsForContext(
         int $networkId,
@@ -395,12 +395,12 @@ class User extends Authenticatable
     }
 
     /**
-     * Resolve a rede e unidade utilizadas na autorizaÁ„o.
+     * Resolve a rede e unidade utilizadas na autoriza√ß√£o.
      *
      * Prioridade:
      *
-     * 1. IDs informados ao mÈtodo;
-     * 2. contexto da sess„o;
+     * 1. IDs informados ao m√©todo;
+     * 2. contexto da sess√£o;
      * 3. contexto persistido em user_contexts.
      *
      * @return array{
@@ -426,7 +426,7 @@ class User extends Authenticatable
         }
 
         /*
-         * Contexto armazenado na sess„o atual.
+         * Contexto armazenado na sess√£o atual.
          */
         if (app()->bound('session')) {
             $sessionNetworkId = session(
@@ -453,7 +453,7 @@ class User extends Authenticatable
         }
 
         /*
-         * Se a sess„o j· resolveu tudo, n„o consulta o banco.
+         * Se a sess√£o j√° resolveu tudo, n√£o consulta o banco.
          */
         if (
             $networkId !== null

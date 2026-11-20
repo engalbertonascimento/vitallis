@@ -31,7 +31,7 @@ class Role extends Model
     }
 
     /**
-     * Permissıes padr„o da funÁ„o.
+     * Permiss√µes padr√£o da fun√ß√£o.
      */
     public function permissions(): BelongsToMany
     {
@@ -40,7 +40,7 @@ class Role extends Model
     }
 
     /**
-     * Rede da funÁ„o, quando seu escopo for network ou unit.
+     * Rede da fun√ß√£o, quando seu escopo for network ou unit.
      */
     public function network(): BelongsTo
     {
@@ -48,7 +48,7 @@ class Role extends Model
     }
 
     /**
-     * Unidade da funÁ„o, quando seu escopo for unit.
+     * Unidade da fun√ß√£o, quando seu escopo for unit.
      */
     public function unit(): BelongsTo
     {
@@ -56,7 +56,7 @@ class Role extends Model
     }
 
     /**
-     * Indica se a funÁ„o possui escopo global.
+     * Indica se a fun√ß√£o possui escopo global.
      */
     public function isGlobal(): bool
     {
@@ -64,7 +64,7 @@ class Role extends Model
     }
 
     /**
-     * Indica se a funÁ„o pertence a uma rede.
+     * Indica se a fun√ß√£o pertence a uma rede.
      */
     public function isNetworkScoped(): bool
     {
@@ -72,7 +72,7 @@ class Role extends Model
     }
 
     /**
-     * Indica se a funÁ„o pertence a uma unidade.
+     * Indica se a fun√ß√£o pertence a uma unidade.
      */
     public function isUnitScoped(): bool
     {

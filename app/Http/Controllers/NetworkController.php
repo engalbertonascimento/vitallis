@@ -34,7 +34,7 @@ class NetworkController extends Controller
     }
 
     /**
-     * Formul·rio de cadastro.
+     * Formul√°rio de cadastro.
      */
     public function create(): View
     {
@@ -64,7 +64,7 @@ class NetworkController extends Controller
     }
 
     /**
-     * Formul·rio de ediÁ„o.
+     * Formul√°rio de edi√ß√£o.
      */
     public function edit(Network $network): View
     {
@@ -101,7 +101,7 @@ class NetworkController extends Controller
     /**
      * Ativa/desativa uma rede.
      *
-     * N„o excluÌmos fisicamente registros.
+     * N√£o exclu√≠mos fisicamente registros.
      */
     public function toggleStatus(Network $network): RedirectResponse
     {

@@ -2,13 +2,13 @@
 
 @section('title', 'Novo Local de Atendimento | Vitallis')
 @section('header', 'Novo local de atendimento')
-@section('subtitle', 'Cadastro da estrutura física da unidade')
+@section('subtitle', 'Cadastro da estrutura fÃ­sica da unidade')
 
 @section('content')
 
 <div class="mx-auto max-w-5xl space-y-6">
 
-    {{-- Cabeçalho --}}
+    {{-- CabeÃ§alho --}}
     <div>
         <a
             href="{{ route('service-locations.index') }}"
@@ -22,7 +22,7 @@
         </h1>
 
         <p class="mt-1 text-sm text-slate-500">
-            Cadastre a estrutura física da unidade de forma organizada e hierárquica.
+            Cadastre a estrutura fÃ­sica da unidade de forma organizada e hierÃ¡rquica.
         </p>
     </div>
 
@@ -60,7 +60,7 @@
         @endif
 
         <p class="mt-3 text-xs text-emerald-700">
-            O local será cadastrado exclusivamente nesta unidade.
+            O local serÃ¡ cadastrado exclusivamente nesta unidade.
         </p>
     </div>
 
@@ -72,14 +72,14 @@
     >
         @csrf
 
-        {{-- Identificação --}}
+        {{-- IdentificaÃ§Ã£o --}}
         <div class="border-b border-slate-200 px-6 py-5">
             <h2 class="font-semibold text-slate-900">
-                Identificação
+                IdentificaÃ§Ã£o
             </h2>
 
             <p class="mt-1 text-sm text-slate-500">
-                Informe o tipo e a identificação do local.
+                Informe o tipo e a identificaÃ§Ã£o do local.
             </p>
         </div>
 
@@ -139,7 +139,7 @@
                     required
                     maxlength="255"
                     value="{{ old('name') }}"
-                    placeholder="Ex.: Consultório 201"
+                    placeholder="Ex.: ConsultÃ³rio 201"
                     class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                 >
 
@@ -151,13 +151,13 @@
             </div>
 
 
-            {{-- Código --}}
+            {{-- CÃ³digo --}}
             <div>
                 <label
                     for="code"
                     class="mb-2 block text-sm font-medium text-slate-700"
                 >
-                    Código
+                    CÃ³digo
                 </label>
 
                 <input
@@ -171,7 +171,7 @@
                 >
 
                 <p class="mt-2 text-xs text-slate-400">
-                    Código opcional e único dentro desta unidade.
+                    CÃ³digo opcional e Ãºnico dentro desta unidade.
                 </p>
 
                 @error('code')
@@ -197,7 +197,7 @@
                     class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                 >
                     <option value="">
-                        Nenhum - nível raiz
+                        Nenhum - nÃ­vel raiz
                     </option>
 
                     @foreach($parents as $parent)
@@ -218,7 +218,7 @@
                 </select>
 
                 <p class="mt-2 text-xs text-slate-400">
-                    Selecione o nível imediatamente superior na estrutura física.
+                    Selecione o nÃ­vel imediatamente superior na estrutura fÃ­sica.
                 </p>
 
                 @error('parent_id')
@@ -229,20 +229,20 @@
             </div>
 
 
-            {{-- Descrição --}}
+            {{-- DescriÃ§Ã£o --}}
             <div class="md:col-span-2">
                 <label
                     for="description"
                     class="mb-2 block text-sm font-medium text-slate-700"
                 >
-                    Descrição
+                    DescriÃ§Ã£o
                 </label>
 
                 <textarea
                     id="description"
                     name="description"
                     rows="4"
-                    placeholder="Informações adicionais sobre o local..."
+                    placeholder="InformaÃ§Ãµes adicionais sobre o local..."
                     class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                 >{{ old('description') }}</textarea>
 
@@ -256,15 +256,15 @@
         </div>
 
 
-        {{-- Orientação --}}
+        {{-- OrientaÃ§Ã£o --}}
         <div class="mx-6 mb-6 rounded-xl border border-blue-100 bg-blue-50 p-5">
             <p class="text-sm font-semibold text-blue-900">
-                Organização hierárquica
+                OrganizaÃ§Ã£o hierÃ¡rquica
             </p>
 
             <p class="mt-2 text-sm text-blue-700">
-                Cadastre primeiro os níveis superiores. Depois utilize-os no campo
-                "Local superior" ao cadastrar os níveis seguintes.
+                Cadastre primeiro os nÃ­veis superiores. Depois utilize-os no campo
+                "Local superior" ao cadastrar os nÃ­veis seguintes.
             </p>
 
             <div class="mt-4 rounded-lg bg-white/70 p-4 text-sm text-blue-800">
@@ -272,15 +272,15 @@
 
                 <div class="mt-2 space-y-1">
                     <p>Bloco A</p>
-                    <p class="pl-4">? 2º Andar</p>
+                    <p class="pl-4">? 2Âº Andar</p>
                     <p class="pl-8">? Ala Cardiologia</p>
-                    <p class="pl-12">? Consultório 201</p>
+                    <p class="pl-12">? ConsultÃ³rio 201</p>
                 </div>
             </div>
         </div>
 
 
-        {{-- Rodapé --}}
+        {{-- RodapÃ© --}}
         <div class="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-6 py-5 sm:flex-row sm:justify-end">
 
             <a

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Patient extends Model
 {
@@ -65,5 +66,15 @@ class Patient extends Model
                 'first_registered_at',
             ])
             ->withTimestamps();
+    }
+    
+    /**
+     * Histórico longitudinal de atendimentos clínicos.
+     */
+    public function medicalEncounters(): HasMany
+    {
+        return $this->hasMany(
+            MedicalEncounter::class
+        );
     }
 }

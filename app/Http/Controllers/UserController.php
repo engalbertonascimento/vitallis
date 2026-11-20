@@ -15,7 +15,7 @@ use Illuminate\View\View;
 class UserController extends Controller
 {
     /**
-     * Lista os usu·rios cadastrados.
+     * Lista os usu√°rios cadastrados.
      */
     public function index(Request $request): View
     {
@@ -41,7 +41,7 @@ class UserController extends Controller
     }
 
     /**
-     * Exibe o formul·rio de cadastro.
+     * Exibe o formul√°rio de cadastro.
      */
     public function create(): View
     {
@@ -68,7 +68,7 @@ class UserController extends Controller
     }
 
     /**
-     * Cadastra usu·rio e seu primeiro vÌnculo.
+     * Cadastra usu√°rio e seu primeiro v√≠nculo.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -118,14 +118,14 @@ class UserController extends Controller
         if ($role->slug !== 'vitallis-admin' && empty($validated['network_id'])) {
             return back()
                 ->withErrors([
-                    'network_id' => 'Selecione a rede em que o usu·rio atuar·.',
+                    'network_id' => 'Selecione a rede em que o usu√°rio atuar√°.',
                 ])
                 ->withInput();
         }
 
         /*
          * Se uma unidade foi informada, ela obrigatoriamente
-         * precisa pertencer ‡ rede selecionada.
+         * precisa pertencer √† rede selecionada.
          */
         if (! empty($validated['unit_id'])) {
             $unitBelongsToNetwork = Unit::query()
@@ -136,7 +136,7 @@ class UserController extends Controller
             if (! $unitBelongsToNetwork) {
                 return back()
                     ->withErrors([
-                        'unit_id' => 'A unidade selecionada n„o pertence ‡ rede informada.',
+                        'unit_id' => 'A unidade selecionada n√£o pertence √† rede informada.',
                     ])
                     ->withInput();
             }
@@ -170,11 +170,11 @@ class UserController extends Controller
 
         return redirect()
             ->route('users.index')
-            ->with('success', 'Usu·rio cadastrado com sucesso.');
+            ->with('success', 'Usu√°rio cadastrado com sucesso.');
     }
 
     /**
-     * Exibe o formul·rio de ediÁ„o.
+     * Exibe o formul√°rio de edi√ß√£o.
      */
     public function edit(User $user): View
     {
@@ -196,9 +196,9 @@ class UserController extends Controller
             ->get();
 
         /*
-         * Neste primeiro CRUD editaremos o vÌnculo ativo principal.
+         * Neste primeiro CRUD editaremos o v√≠nculo ativo principal.
          *
-         * Depois criaremos a administraÁ„o de m˙ltiplos vÌnculos
+         * Depois criaremos a administra√ß√£o de m√∫ltiplos v√≠nculos
          * separadamente, sem mudar a arquitetura.
          */
         $currentRole = $user->roles
@@ -214,7 +214,7 @@ class UserController extends Controller
     }
 
     /**
-     * Atualiza usu·rio e vÌnculo principal.
+     * Atualiza usu√°rio e v√≠nculo principal.
      */
     public function update(Request $request, User $user): RedirectResponse
     {
@@ -260,7 +260,7 @@ class UserController extends Controller
         if ($role->slug !== 'vitallis-admin' && empty($validated['network_id'])) {
             return back()
                 ->withErrors([
-                    'network_id' => 'Selecione a rede em que o usu·rio atuar·.',
+                    'network_id' => 'Selecione a rede em que o usu√°rio atuar√°.',
                 ])
                 ->withInput();
         }
@@ -274,7 +274,7 @@ class UserController extends Controller
             if (! $unitBelongsToNetwork) {
                 return back()
                     ->withErrors([
-                        'unit_id' => 'A unidade selecionada n„o pertence ‡ rede informada.',
+                        'unit_id' => 'A unidade selecionada n√£o pertence √† rede informada.',
                     ])
                     ->withInput();
             }
@@ -293,8 +293,8 @@ class UserController extends Controller
             $user->update($userData);
 
             /*
-             * Desativa os vÌnculos atuais.
-             * N„o apagamos histÛrico.
+             * Desativa os v√≠nculos atuais.
+             * N√£o apagamos hist√≥rico.
              */
             DB::table('role_user')
                 ->where('user_id', $user->id)
@@ -305,7 +305,7 @@ class UserController extends Controller
                 ]);
 
             /*
-             * Cria o novo vÌnculo ativo.
+             * Cria o novo v√≠nculo ativo.
              */
             DB::table('role_user')->insert([
                 'user_id' => $user->id,
@@ -327,23 +327,23 @@ class UserController extends Controller
 
         return redirect()
             ->route('users.index')
-            ->with('success', 'Usu·rio atualizado com sucesso.');
+            ->with('success', 'Usu√°rio atualizado com sucesso.');
     }
 
     /**
-     * Ativa ou desativa o usu·rio.
+     * Ativa ou desativa o usu√°rio.
      */
     public function toggleStatus(User $user): RedirectResponse
     {
         /*
-         * Evita que o prÛprio usu·rio desative sua conta
-         * enquanto est· autenticado.
+         * Evita que o pr√≥prio usu√°rio desative sua conta
+         * enquanto est√° autenticado.
          */
         if (auth()->id() === $user->id) {
             return redirect()
                 ->route('users.index')
                 ->withErrors([
-                    'user' => 'VocÍ n„o pode desativar o prÛprio usu·rio.',
+                    'user' => 'Voc√™ n√£o pode desativar o pr√≥prio usu√°rio.',
                 ]);
         }
 
@@ -356,8 +356,8 @@ class UserController extends Controller
             ->with(
                 'success',
                 $user->active
-                    ? 'Usu·rio ativado com sucesso.'
-                    : 'Usu·rio desativado com sucesso.'
+                    ? 'Usu√°rio ativado com sucesso.'
+                    : 'Usu√°rio desativado com sucesso.'
             );
     }
 }

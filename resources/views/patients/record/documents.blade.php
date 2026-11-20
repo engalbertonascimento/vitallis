@@ -1,0 +1,1 @@
+@include('patients.record._placeholder')

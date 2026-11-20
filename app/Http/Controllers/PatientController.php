@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Appointment;
 use App\Models\Network;
 use App\Models\Patient;
 use App\Models\Unit;
@@ -15,16 +16,22 @@ use Illuminate\View\View;
 class PatientController extends Controller
 {
     /**
-     * Lista somente os pacientes acess�veis ao usu�rio.
+     * Lista somente os pacientes acessíveis ao usuário.
      */
     public function index(Request $request): View
     {
         $user = $request->user();
 
-        $search = trim((string) $request->get('search'));
-        $networkId = $request->integer('network_id') ?: null;
+        $search = trim(
+            (string) $request->get('search')
+        );
 
-        $accessibleNetworkIds = $this->accessibleNetworkIds($request);
+        $networkId = $request->integer(
+            'network_id'
+        ) ?: null;
+
+        $accessibleNetworkIds = $this
+            ->accessibleNetworkIds($request);
 
         $patients = Patient::query()
             ->with([
@@ -32,7 +39,10 @@ class PatientController extends Controller
                     $user,
                     $accessibleNetworkIds
                 ) {
-                    $query->wherePivot('active', true);
+                    $query->wherePivot(
+                        'active',
+                        true
+                    );
 
                     if (! $user->isVitallisAdmin()) {
                         $query->whereIn(
@@ -44,10 +54,16 @@ class PatientController extends Controller
             ])
             ->when(
                 ! $user->isVitallisAdmin(),
-                function (Builder $query) use ($accessibleNetworkIds) {
+                function (
+                    Builder $query
+                ) use (
+                    $accessibleNetworkIds
+                ) {
                     $query->whereHas(
                         'networks',
-                        function (Builder $networkQuery) use (
+                        function (
+                            Builder $networkQuery
+                        ) use (
                             $accessibleNetworkIds
                         ) {
                             $networkQuery
@@ -65,14 +81,16 @@ class PatientController extends Controller
             )
             ->when(
                 $networkId !== null,
-                function (Builder $query) use (
+                function (
+                    Builder $query
+                ) use (
                     $networkId,
                     $user,
                     $accessibleNetworkIds
                 ) {
                     /*
-                     * Impede que um network_id manipulado na URL
-                     * amplie o acesso do usu�rio.
+                     * Impede que um network_id manipulado
+                     * na URL amplie o acesso do usuário.
                      */
                     if (
                         ! $user->isVitallisAdmin()
@@ -82,12 +100,17 @@ class PatientController extends Controller
                             true
                         )
                     ) {
-                        abort(403);
+                        abort(
+                            403,
+                            'Você não possui acesso a esta rede.'
+                        );
                     }
 
                     $query->whereHas(
                         'networks',
-                        function (Builder $networkQuery) use (
+                        function (
+                            Builder $networkQuery
+                        ) use (
                             $networkId
                         ) {
                             $networkQuery
@@ -105,7 +128,11 @@ class PatientController extends Controller
             )
             ->when(
                 $search !== '',
-                function (Builder $query) use ($search) {
+                function (
+                    Builder $query
+                ) use (
+                    $search
+                ) {
                     $onlyNumbers = preg_replace(
                         '/\D+/',
                         '',
@@ -113,7 +140,9 @@ class PatientController extends Controller
                     );
 
                     $query->where(
-                        function (Builder $searchQuery) use (
+                        function (
+                            Builder $searchQuery
+                        ) use (
                             $search,
                             $onlyNumbers
                         ) {
@@ -170,7 +199,9 @@ class PatientController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $networks = $this->accessibleNetworks($request);
+        $networks = $this->accessibleNetworks(
+            $request
+        );
 
         return view(
             'patients.index',
@@ -184,12 +215,17 @@ class PatientController extends Controller
     }
 
     /**
-     * Exibe o formul�rio de cadastro.
+     * Exibe o formulário de cadastro.
      */
     public function create(Request $request): View
     {
-        $networks = $this->accessibleNetworks($request);
-        $units = $this->accessibleUnits($request);
+        $networks = $this->accessibleNetworks(
+            $request
+        );
+
+        $units = $this->accessibleUnits(
+            $request
+        );
 
         return view(
             'patients.create',
@@ -201,15 +237,18 @@ class PatientController extends Controller
     }
 
     /**
-     * Cadastra o paciente e cria o v�nculo com a rede.
+     * Cadastra o paciente e cria o vínculo com a rede.
      */
-    public function store(Request $request): RedirectResponse
-    {
+    public function store(
+        Request $request
+    ): RedirectResponse {
         $validated = $this->validatePatient(
             $request
         );
 
-        $networkId = (int) $validated['network_id'];
+        $networkId = (int) $validated[
+            'network_id'
+        ];
 
         $this->authorizeNetwork(
             $request,
@@ -245,11 +284,20 @@ class PatientController extends Controller
                 $patient->networks()->attach(
                     $networkId,
                     [
-                        'origin_unit_id' => $originUnitId,
-                        'active' => true,
-                        'first_registered_at' => now(),
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        'origin_unit_id' =>
+                            $originUnitId,
+
+                        'active' =>
+                            true,
+
+                        'first_registered_at' =>
+                            now(),
+
+                        'created_at' =>
+                            now(),
+
+                        'updated_at' =>
+                            now(),
                     ]
                 );
             }
@@ -264,7 +312,16 @@ class PatientController extends Controller
     }
 
     /**
-     * Exibe os dados do paciente.
+     * Exibe o prontuário longitudinal do paciente.
+     *
+     * A tela funciona em dois modos:
+     *
+     * view:
+     *     consulta ao histórico, sem alterações clínicas;
+     *
+     * edit:
+     *     edição clínica durante atendimento em andamento,
+     *     supervisão ou autorização excepcional.
      */
     public function show(
         Request $request,
@@ -275,19 +332,200 @@ class PatientController extends Controller
             $patient
         );
 
+        $user = $request->user();
+
+        $context = $this->activeContext(
+            $request
+        );
+
         $patient->load([
-            'networks',
+            'networks' => function ($query) {
+                $query->wherePivot(
+                    'active',
+                    true
+                );
+            },
             'users',
         ]);
 
+        /*
+         * Atendimento administrativo em andamento
+         * dentro da unidade ativa.
+         */
+        $activeAppointment = null;
+
+        if ($context) {
+            $activeAppointment = Appointment::query()
+                ->with([
+                    'professional',
+                    'schedule.specialtyRelation',
+                    'schedule.serviceLocation',
+                    'unit',
+                    'medicalEncounter',
+                ])
+                ->where(
+                    'patient_id',
+                    $patient->id
+                )
+                ->where(
+                    'network_id',
+                    $context->network_id
+                )
+                ->where(
+                    'unit_id',
+                    $context->unit_id
+                )
+                ->where(
+                    'status',
+                    'in_progress'
+                )
+                ->orderByDesc('starts_at')
+                ->first();
+        }
+
+        /*
+         * O usuário atual é o profissional responsável
+         * pelo atendimento em andamento?
+         */
+        $isResponsibleProfessional =
+            $activeAppointment !== null
+            && (int) $activeAppointment
+                ->professional_user_id
+                === (int) $user->id;
+
+        /*
+         * Exceções autorizadas pelo RBAC.
+         */
+        $canWriteOutsideEncounter =
+            $user->hasPermission(
+                'medical_records.write_outside_encounter'
+            );
+
+        $canSupervise =
+            $user->hasPermission(
+                'medical_records.supervise'
+            );
+
+        /*
+         * A edição clínica é permitida quando:
+         *
+         * 1. o usuário é o profissional responsável
+         *    pelo atendimento em andamento;
+         *
+         * 2. possui permissão de supervisão;
+         *
+         * 3. possui permissão para alteração
+         *    fora do atendimento.
+         */
+        $canEditClinicalRecord =
+            $isResponsibleProfessional
+            || $canSupervise
+            || $canWriteOutsideEncounter;
+
+        $recordMode = $canEditClinicalRecord
+            ? 'edit'
+            : 'view';
+
+        /*
+         * Histórico longitudinal de episódios clínicos.
+         *
+         * MedicalEncounter representa o episódio clínico real.
+         * Appointment representa o fluxo administrativo
+         * da agenda.
+         */
+        $medicalEncounters = $patient
+            ->medicalEncounters()
+            ->with([
+                'appointment',
+                'professional',
+                'specialty',
+                'serviceLocation',
+                'unit',
+                'createdBy',
+                'completedBy',
+            ])
+            ->when(
+                $context !== null,
+                function ($query) use ($context) {
+                    $query->where(
+                        'network_id',
+                        $context->network_id
+                    );
+                }
+            )
+            ->orderByDesc('started_at')
+            ->get();
+
+        /*
+         * Abas visíveis no fichário.
+         *
+         * A view utiliza essas autorizações para não
+         * apresentar conteúdos que o perfil não pode consultar.
+         */
+        $tabs = [
+            'summary' => true,
+
+            'registration' => true,
+
+            'encounters' => $user->hasPermission(
+                'medical_records.view'
+            ),
+
+            'evolutions' => $user->hasPermission(
+                'medical_records.view'
+            ),
+
+            'diagnoses' => $user->hasPermission(
+                'medical_records.view'
+            ),
+
+            'prescriptions' => $user->hasPermission(
+                'prescriptions.view'
+            ),
+
+            'exams' => $user->hasPermission(
+                'exams.view'
+            ),
+
+            /*
+             * Ainda não existem permissões próprias para
+             * escalas, documentos e alta.
+             *
+             * Temporariamente acompanham
+             * medical_records.view.
+             */
+            'scales' => $user->hasPermission(
+                'medical_records.view'
+            ),
+
+            'documents' => $user->hasPermission(
+                'medical_records.view'
+            ),
+
+            'discharge' => $user->hasPermission(
+                'medical_records.view'
+            ),
+        ];
+
         return view(
             'patients.show',
-            compact('patient')
+            compact(
+                'patient',
+                'activeAppointment',
+                'medicalEncounters',
+                'isResponsibleProfessional',
+                'canWriteOutsideEncounter',
+                'canSupervise',
+                'canEditClinicalRecord',
+                'recordMode',
+                'tabs',
+                'context'
+            )
         );
     }
 
     /**
-     * Exibe o formul�rio de edi��o.
+     * Exibe o formulário de edição.
      */
     public function edit(
         Request $request,
@@ -329,7 +567,8 @@ class PatientController extends Controller
     /**
      * Atualiza o cadastro mestre do paciente.
      *
-     * O v�nculo com a rede n�o � alterado silenciosamente aqui.
+     * O vínculo com a rede não é alterado
+     * silenciosamente aqui.
      */
     public function update(
         Request $request,
@@ -407,6 +646,7 @@ class PatientController extends Controller
                 'nullable',
                 'string',
                 'max:14',
+
                 Rule::unique(
                     'patients',
                     'cpf'
@@ -417,6 +657,7 @@ class PatientController extends Controller
                 'nullable',
                 'string',
                 'max:20',
+
                 Rule::unique(
                     'patients',
                     'cns'
@@ -509,8 +750,9 @@ class PatientController extends Controller
 
             /*
              * Utilizados no cadastro inicial.
-             * Na edi��o, n�o modificamos automaticamente
-             * o v�nculo patient_network.
+             *
+             * Na edição, não modificamos automaticamente
+             * o vínculo patient_network.
              */
             'network_id' => [
                 Rule::requiredIf(
@@ -536,18 +778,21 @@ class PatientController extends Controller
         array $validated
     ): array {
         return [
-            'name' => $validated['name'],
+            'name' =>
+                $validated['name'],
 
             'social_name' =>
                 $validated['social_name'] ?? null,
 
-            'cpf' => $this->numbersOnly(
-                $validated['cpf'] ?? null
-            ),
+            'cpf' =>
+                $this->numbersOnly(
+                    $validated['cpf'] ?? null
+                ),
 
-            'cns' => $this->numbersOnly(
-                $validated['cns'] ?? null
-            ),
+            'cns' =>
+                $this->numbersOnly(
+                    $validated['cns'] ?? null
+                ),
 
             'birth_date' =>
                 $validated['birth_date'] ?? null,
@@ -564,17 +809,20 @@ class PatientController extends Controller
             'email' =>
                 $validated['email'] ?? null,
 
-            'phone' => $this->numbersOnly(
-                $validated['phone'] ?? null
-            ),
+            'phone' =>
+                $this->numbersOnly(
+                    $validated['phone'] ?? null
+                ),
 
-            'mobile_phone' => $this->numbersOnly(
-                $validated['mobile_phone'] ?? null
-            ),
+            'mobile_phone' =>
+                $this->numbersOnly(
+                    $validated['mobile_phone'] ?? null
+                ),
 
-            'postal_code' => $this->numbersOnly(
-                $validated['postal_code'] ?? null
-            ),
+            'postal_code' =>
+                $this->numbersOnly(
+                    $validated['postal_code'] ?? null
+                ),
 
             'street' =>
                 $validated['street'] ?? null,
@@ -591,8 +839,12 @@ class PatientController extends Controller
             'city' =>
                 $validated['city'] ?? null,
 
-            'state' => isset($validated['state'])
-                ? strtoupper($validated['state'])
+            'state' => isset(
+                $validated['state']
+            )
+                ? strtoupper(
+                    $validated['state']
+                )
                 : null,
 
             'active' => true,
@@ -600,7 +852,7 @@ class PatientController extends Controller
     }
 
     /**
-     * Retorna as redes acess�veis pelo usu�rio.
+     * Retorna os IDs das redes acessíveis pelo usuário.
      */
     private function accessibleNetworkIds(
         Request $request
@@ -610,22 +862,29 @@ class PatientController extends Controller
         if ($user->isVitallisAdmin()) {
             return Network::query()
                 ->pluck('id')
-                ->map(fn ($id) => (int) $id)
+                ->map(
+                    fn ($id) => (int) $id
+                )
                 ->all();
         }
 
         return DB::table('role_user')
-            ->where('user_id', $user->id)
+            ->where(
+                'user_id',
+                $user->id
+            )
             ->where('active', true)
             ->whereNotNull('network_id')
             ->distinct()
             ->pluck('network_id')
-            ->map(fn ($id) => (int) $id)
+            ->map(
+                fn ($id) => (int) $id
+            )
             ->all();
     }
 
     /**
-     * Consulta as redes acess�veis e ativas.
+     * Consulta as redes acessíveis e ativas.
      */
     private function accessibleNetworks(
         Request $request
@@ -637,7 +896,9 @@ class PatientController extends Controller
         if (! $request->user()->isVitallisAdmin()) {
             $query->whereIn(
                 'id',
-                $this->accessibleNetworkIds($request)
+                $this->accessibleNetworkIds(
+                    $request
+                )
             );
         }
 
@@ -648,7 +909,7 @@ class PatientController extends Controller
     }
 
     /**
-     * Consulta as unidades acess�veis e ativas.
+     * Consulta as unidades acessíveis e ativas.
      */
     private function accessibleUnits(
         Request $request
@@ -668,7 +929,10 @@ class PatientController extends Controller
         }
 
         $links = DB::table('role_user')
-            ->where('user_id', $user->id)
+            ->where(
+                'user_id',
+                $user->id
+            )
             ->where('active', true)
             ->whereNotNull('network_id')
             ->get([
@@ -679,7 +943,9 @@ class PatientController extends Controller
         $networkWideIds = $links
             ->whereNull('unit_id')
             ->pluck('network_id')
-            ->map(fn ($id) => (int) $id)
+            ->map(
+                fn ($id) => (int) $id
+            )
             ->unique()
             ->values()
             ->all();
@@ -687,13 +953,17 @@ class PatientController extends Controller
         $specificUnitIds = $links
             ->whereNotNull('unit_id')
             ->pluck('unit_id')
-            ->map(fn ($id) => (int) $id)
+            ->map(
+                fn ($id) => (int) $id
+            )
             ->unique()
             ->values()
             ->all();
 
         $query->where(
-            function (Builder $unitQuery) use (
+            function (
+                Builder $unitQuery
+            ) use (
                 $networkWideIds,
                 $specificUnitIds
             ) {
@@ -719,7 +989,9 @@ class PatientController extends Controller
                     $networkWideIds === []
                     && $specificUnitIds === []
                 ) {
-                    $unitQuery->whereRaw('1 = 0');
+                    $unitQuery->whereRaw(
+                        '1 = 0'
+                    );
                 }
             }
         );
@@ -732,7 +1004,7 @@ class PatientController extends Controller
     }
 
     /**
-     * Verifica se o usu�rio pode operar na rede.
+     * Verifica se o usuário pode operar na rede.
      */
     private function authorizeNetwork(
         Request $request,
@@ -745,13 +1017,15 @@ class PatientController extends Controller
         if (
             ! in_array(
                 $networkId,
-                $this->accessibleNetworkIds($request),
+                $this->accessibleNetworkIds(
+                    $request
+                ),
                 true
             )
         ) {
             abort(
                 403,
-                'Voc� n�o possui acesso a esta rede.'
+                'Você não possui acesso a esta rede.'
             );
         }
     }
@@ -770,14 +1044,17 @@ class PatientController extends Controller
 
         $unit = Unit::query()
             ->whereKey($originUnitId)
-            ->where('network_id', $networkId)
+            ->where(
+                'network_id',
+                $networkId
+            )
             ->where('active', true)
             ->first();
 
         if (! $unit) {
             abort(
                 422,
-                'A unidade selecionada n�o pertence � rede.'
+                'A unidade selecionada não pertence à rede.'
             );
         }
 
@@ -788,7 +1065,9 @@ class PatientController extends Controller
         $accessibleUnitIds = $this
             ->accessibleUnits($request)
             ->pluck('id')
-            ->map(fn ($id) => (int) $id)
+            ->map(
+                fn ($id) => (int) $id
+            )
             ->all();
 
         if (
@@ -800,13 +1079,13 @@ class PatientController extends Controller
         ) {
             abort(
                 403,
-                'Voc� n�o possui acesso a esta unidade.'
+                'Você não possui acesso a esta unidade.'
             );
         }
     }
 
     /**
-     * Protege acesso direto por URL.
+     * Protege o acesso direto ao paciente por URL.
      */
     private function authorizePatientAccess(
         Request $request,
@@ -818,19 +1097,75 @@ class PatientController extends Controller
 
         $hasAccess = $patient
             ->networks()
-            ->wherePivot('active', true)
+            ->wherePivot(
+                'active',
+                true
+            )
             ->whereIn(
                 'networks.id',
-                $this->accessibleNetworkIds($request)
+                $this->accessibleNetworkIds(
+                    $request
+                )
             )
             ->exists();
 
         if (! $hasAccess) {
             abort(
                 403,
-                'Voc� n�o possui acesso a este paciente.'
+                'Você não possui acesso a este paciente.'
             );
         }
+    }
+
+    /**
+     * Resolve o contexto operacional ativo do usuário.
+     */
+    private function activeContext(
+        Request $request
+    ): ?object {
+        $networkId = $request
+            ->session()
+            ->get('active_network_id');
+
+        $unitId = $request
+            ->session()
+            ->get('active_unit_id');
+
+        if ($networkId && $unitId) {
+            return (object) [
+                'network_id' => (int) $networkId,
+                'unit_id' => (int) $unitId,
+            ];
+        }
+
+        /*
+         * Fallback para o contexto persistido.
+         */
+        $context = DB::table('user_contexts')
+            ->where(
+                'user_id',
+                $request->user()->id
+            )
+            ->first([
+                'network_id',
+                'unit_id',
+            ]);
+
+        if (
+            ! $context
+            || ! $context->network_id
+            || ! $context->unit_id
+        ) {
+            return null;
+        }
+
+        return (object) [
+            'network_id' =>
+                (int) $context->network_id,
+
+            'unit_id' =>
+                (int) $context->unit_id,
+        ];
     }
 
     /**
@@ -839,7 +1174,10 @@ class PatientController extends Controller
     private function numbersOnly(
         ?string $value
     ): ?string {
-        if ($value === null || trim($value) === '') {
+        if (
+            $value === null
+            || trim($value) === ''
+        ) {
             return null;
         }
 

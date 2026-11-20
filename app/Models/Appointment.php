@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Appointment extends Model
 {
@@ -85,4 +86,14 @@ class Appointment extends Model
             'cancelled_by_user_id'
         );
     }
+    
+  /**
+   * Episódio clínico originado por este agendamento.
+   */
+  public function medicalEncounter(): HasOne
+  {
+      return $this->hasOne(
+          MedicalEncounter::class
+      );
+  }
 }

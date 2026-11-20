@@ -14,6 +14,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use App\Models\Specialty;
 use App\Models\User;
+use App\Models\MedicalEncounter;
 
 class AppointmentController extends Controller
 {
@@ -42,7 +43,7 @@ public function index(Request $request): View
         $date = now()->startOfDay();
     }
 
-    // Grades v�lidas para o dia selecionado
+    // Grades válidas para o dia selecionado
     $schedulesQuery = Schedule::query()
         ->with([
             'professional',
@@ -80,7 +81,7 @@ public function index(Request $request): View
         ->orderBy('starts_at')
         ->get();
 
-    // Profissionais dispon�veis na unidade
+    // Profissionais disponíveis na unidade
     $professionals = User::query()
         ->whereIn(
             'id',
@@ -94,7 +95,7 @@ public function index(Request $request): View
         ->orderBy('name')
         ->get();
 
-    // Especialidades dispon�veis na unidade
+    // Especialidades disponíveis na unidade
     $specialties = Specialty::query()
         ->where('active', true)
         ->whereIn(
@@ -157,7 +158,7 @@ public function index(Request $request): View
 }
 
     /**
-     * Formul�rio para novo agendamento.
+     * Formulário para novo agendamento.
      */
     public function create(Request $request): View
     {
@@ -171,7 +172,7 @@ public function index(Request $request): View
         }
 
         /*
-         * Pacientes dispon�veis na rede da unidade atual.
+         * Pacientes disponíveis na rede da unidade atual.
          */
         $patients = Patient::query()
             ->where('active', true)
@@ -285,7 +286,7 @@ public function index(Request $request): View
         ]);
 
         /*
-         * Confirma que o paciente pertence � rede atual.
+         * Confirma que o paciente pertence à rede atual.
          */
         $patient = Patient::query()
             ->whereKey($validated['patient_id'])
@@ -309,12 +310,12 @@ public function index(Request $request): View
         if (! $patient) {
             abort(
                 403,
-                'O paciente n�o est� dispon�vel na rede atual.'
+                'O paciente não está disponível na rede atual.'
             );
         }
 
         /*
-         * Confirma que a grade pertence � unidade ativa.
+         * Confirma que a grade pertence à unidade ativa.
          */
         $schedule = Schedule::query()
             ->whereKey($validated['schedule_id'])
@@ -332,7 +333,7 @@ public function index(Request $request): View
         if (! $schedule) {
             abort(
                 403,
-                'A agenda selecionada n�o pertence � unidade atual.'
+                'A agenda selecionada não pertence à unidade atual.'
             );
         }
 
@@ -342,13 +343,13 @@ public function index(Request $request): View
         )->startOfDay();
 
         /*
-         * O dia selecionado precisa corresponder � grade.
-         * Carbon: 0 domingo ... 6 s�bado.
+         * O dia selecionado precisa corresponder à grade.
+         * Carbon: 0 domingo ... 6 sábado.
          */
         if ($date->dayOfWeek !== (int) $schedule->weekday) {
             throw ValidationException::withMessages([
                 'date' =>
-                    'A agenda selecionada n�o possui atendimento neste dia da semana.',
+                    'A agenda selecionada não possui atendimento neste dia da semana.',
             ]);
         }
 
@@ -363,7 +364,7 @@ public function index(Request $request): View
         ) {
             throw ValidationException::withMessages([
                 'date' =>
-                    'A data escolhida est� fora do per�odo de validade desta agenda.',
+                    'A data escolhida está fora do período de validade desta agenda.',
             ]);
         }
 
@@ -389,7 +390,7 @@ public function index(Request $request): View
             );
 
         /*
-         * O hor�rio precisa caber integralmente na grade.
+         * O horário precisa caber integralmente na grade.
          */
         if (
             $startsAt->lt($scheduleStartsAt)
@@ -397,12 +398,12 @@ public function index(Request $request): View
         ) {
             throw ValidationException::withMessages([
                 'time' =>
-                    'O hor�rio informado est� fora da grade selecionada.',
+                    'O horário informado está fora da grade selecionada.',
             ]);
         }
 
         /*
-         * O hor�rio tamb�m precisa respeitar o intervalo
+         * O horário também precisa respeitar o intervalo
          * configurado na grade.
          */
         $minutesFromScheduleStart =
@@ -418,7 +419,7 @@ public function index(Request $request): View
         ) {
             throw ValidationException::withMessages([
                 'time' =>
-                    'O hor�rio informado n�o corresponde a um hor�rio v�lido desta agenda.',
+                    'O horário informado não corresponde a um horário válido desta agenda.',
             ]);
         }
 
@@ -433,8 +434,8 @@ public function index(Request $request): View
                 $endsAt
             ) {
                 /*
-                 * Bloqueia a grade durante a verifica��o
-                 * para reduzir risco de dupla marca��o.
+                 * Bloqueia a grade durante a verificação
+                 * para reduzir risco de dupla marcação.
                  */
                 Schedule::query()
                     ->whereKey($schedule->id)
@@ -465,13 +466,13 @@ public function index(Request $request): View
                 ) {
                     throw ValidationException::withMessages([
                         'time' =>
-                            'Este hor�rio n�o possui mais vagas dispon�veis.',
+                            'Este horário não possui mais vagas disponíveis.',
                     ]);
                 }
 
                 /*
-                 * N�o permite duplicar o mesmo paciente
-                 * no mesmo hor�rio da mesma agenda.
+                 * Não permite duplicar o mesmo paciente
+                 * no mesmo horário da mesma agenda.
                  */
                 $patientAlreadyScheduled =
                     Appointment::query()
@@ -499,7 +500,7 @@ public function index(Request $request): View
                 if ($patientAlreadyScheduled) {
                     throw ValidationException::withMessages([
                         'patient_id' =>
-                            'Este paciente j� possui agendamento neste hor�rio.',
+                            'Este paciente já possui agendamento neste horário.',
                     ]);
                 }
 
@@ -558,7 +559,7 @@ public function index(Request $request): View
         $user = $request->user();
 
         /*
-         * Primeiro tenta a sess�o.
+         * Primeiro tenta a sessão.
          */
         $networkId = $request->session()->get(
             'active_network_id'
@@ -616,13 +617,13 @@ public function checkin(
         || $appointment->network_id !== $context->network_id
         || $appointment->unit_id !== $context->unit_id
     ) {
-        abort(403, 'Este agendamento n�o pertence � unidade atual.');
+        abort(403, 'Este agendamento não pertence à unidade atual.');
     }
 
     if (! in_array($appointment->status, ['scheduled', 'confirmed'])) {
         return back()->with(
             'error',
-            'Este atendimento n�o permite check-in.'
+            'Este atendimento não permite check-in.'
         );
     }
 
@@ -637,7 +638,7 @@ public function checkin(
     );
 }
 /**
- * Registra aus�ncia do paciente.
+ * Registra ausência do paciente.
  */
 public function noShow(
     Request $request,
@@ -651,20 +652,20 @@ public function noShow(
         || $appointment->network_id !== $context->network_id
         || $appointment->unit_id !== $context->unit_id
     ) {
-        abort(403, 'Este agendamento n�o pertence � unidade atual.');
+        abort(403, 'Este agendamento não pertence à unidade atual.');
     }
 
     if (! in_array($appointment->status, ['scheduled', 'confirmed'])) {
         return back()->with(
             'error',
-            'Este atendimento n�o permite registrar aus�ncia.'
+            'Este atendimento não permite registrar ausência.'
         );
     }
 
     if (now()->lt($appointment->starts_at)) {
         return back()->with(
             'error',
-            'N�o � poss�vel registrar aus�ncia antes do hor�rio agendado.'
+            'Não é possível registrar ausência antes do horário agendado.'
         );
     }
 
@@ -674,25 +675,55 @@ public function noShow(
 
     return back()->with(
         'success',
-        'Paciente registrado como n�o compareceu.'
+        'Paciente registrado como não compareceu.'
     );
 }
 
 /**
- * Inicia o atendimento.
+ * Inicia o atendimento e cria o episódio clínico.
  */
 public function start(
     Request $request,
     Appointment $appointment
 ): RedirectResponse {
+    $user = $request->user();
+
     $context = $this->activeContext($request);
 
     if (
         ! $context
-        || $appointment->network_id !== $context->network_id
-        || $appointment->unit_id !== $context->unit_id
+        || (int) $appointment->network_id
+            !== (int) $context->network_id
+        || (int) $appointment->unit_id
+            !== (int) $context->unit_id
     ) {
-        abort(403, 'Este agendamento não pertence à unidade atual.');
+        abort(
+            403,
+            'Este agendamento não pertence à unidade atual.'
+        );
+    }
+
+    /*
+     * O atendimento deve ser iniciado pelo profissional
+     * responsável ou por alguém com supervisão clínica.
+     */
+    $isResponsibleProfessional =
+        (int) $appointment->professional_user_id
+        === (int) $user->id;
+
+    $canSupervise = $user->hasPermission(
+        'medical_records.supervise'
+    );
+
+    if (
+        ! $isResponsibleProfessional
+        && ! $canSupervise
+        && ! $user->isVitallisAdmin()
+    ) {
+        abort(
+            403,
+            'Somente o profissional responsável ou um supervisor autorizado pode iniciar este atendimento.'
+        );
     }
 
     if ($appointment->status !== 'waiting') {
@@ -702,28 +733,140 @@ public function start(
         );
     }
 
-    $appointment->update([
-        'status' => 'in_progress',
-    ]);
+    DB::transaction(
+        function () use (
+            $appointment,
+            $user,
+            $context
+        ) {
+            /*
+             * Bloqueia o agendamento para impedir
+             * dois profissionais iniciando simultaneamente.
+             */
+            $lockedAppointment = Appointment::query()
+                ->with([
+                    'schedule',
+                    'medicalEncounter',
+                ])
+                ->whereKey($appointment->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-    return back()->with('success', 'Atendimento iniciado.');
+            if ($lockedAppointment->status !== 'waiting') {
+                throw ValidationException::withMessages([
+                    'appointment' =>
+                        'Este atendimento já foi iniciado ou não está mais aguardando.',
+                ]);
+            }
+
+            $startedAt = now();
+
+            $lockedAppointment->update([
+                'status' => 'in_progress',
+            ]);
+
+            /*
+             * Um agendamento gera somente um episódio clínico.
+             *
+             * firstOrCreate também protege casos em que uma
+             * tentativa anterior criou o episódio antes de
+             * uma nova requisição ou repetição do fluxo.
+             */
+            MedicalEncounter::firstOrCreate(
+                [
+                    'appointment_id' =>
+                        $lockedAppointment->id,
+                ],
+                [
+                    'patient_id' =>
+                        $lockedAppointment->patient_id,
+
+                    'network_id' =>
+                        $context->network_id,
+
+                    'unit_id' =>
+                        $context->unit_id,
+
+                    'professional_user_id' =>
+                        $lockedAppointment
+                            ->professional_user_id,
+
+                    'specialty_id' =>
+                        $lockedAppointment
+                            ->schedule
+                            ?->specialty_id,
+
+                    'service_location_id' =>
+                        $lockedAppointment
+                            ->schedule
+                            ?->service_location_id,
+
+                    'status' =>
+                        'in_progress',
+
+                    'started_at' =>
+                        $startedAt,
+
+                    'reason' =>
+                        $lockedAppointment->reason,
+
+                    'created_by_user_id' =>
+                        $user->id,
+
+                    'updated_by_user_id' =>
+                        $user->id,
+                ]
+            );
+        }
+    );
+
+    return back()->with(
+        'success',
+        'Atendimento iniciado e episódio clínico criado com sucesso.'
+    );
 }
 
 /**
- * Finaliza o atendimento.
+ * Finaliza o atendimento administrativo e clínico.
  */
 public function complete(
     Request $request,
     Appointment $appointment
 ): RedirectResponse {
+    $user = $request->user();
+
     $context = $this->activeContext($request);
 
     if (
         ! $context
-        || $appointment->network_id !== $context->network_id
-        || $appointment->unit_id !== $context->unit_id
+        || (int) $appointment->network_id
+            !== (int) $context->network_id
+        || (int) $appointment->unit_id
+            !== (int) $context->unit_id
     ) {
-        abort(403, 'Este agendamento não pertence à unidade atual.');
+        abort(
+            403,
+            'Este agendamento não pertence à unidade atual.'
+        );
+    }
+
+    $isResponsibleProfessional =
+        (int) $appointment->professional_user_id
+        === (int) $user->id;
+
+    $canSupervise = $user->hasPermission(
+        'medical_records.supervise'
+    );
+
+    if (
+        ! $isResponsibleProfessional
+        && ! $canSupervise
+        && ! $user->isVitallisAdmin()
+    ) {
+        abort(
+            403,
+            'Somente o profissional responsável ou um supervisor autorizado pode finalizar este atendimento.'
+        );
     }
 
     if ($appointment->status !== 'in_progress') {
@@ -733,12 +876,103 @@ public function complete(
         );
     }
 
-    $appointment->update([
-        'status' => 'completed',
-        'completed_at' => now(),
-    ]);
+    DB::transaction(
+        function () use (
+            $appointment,
+            $user,
+            $context
+        ) {
+            $lockedAppointment = Appointment::query()
+                ->with([
+                    'schedule',
+                    'medicalEncounter',
+                ])
+                ->whereKey($appointment->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-    return back()->with('success', 'Atendimento finalizado.');
+            if ($lockedAppointment->status !== 'in_progress') {
+                throw ValidationException::withMessages([
+                    'appointment' =>
+                        'Este atendimento não está mais em andamento.',
+                ]);
+            }
+
+            $completedAt = now();
+
+            $lockedAppointment->update([
+                'status' => 'completed',
+                'completed_at' => $completedAt,
+            ]);
+
+            /*
+             * firstOrCreate cobre atendimentos iniciados antes
+             * da implantação de medical_encounters.
+             */
+            $encounter = MedicalEncounter::firstOrCreate(
+                [
+                    'appointment_id' =>
+                        $lockedAppointment->id,
+                ],
+                [
+                    'patient_id' =>
+                        $lockedAppointment->patient_id,
+
+                    'network_id' =>
+                        $context->network_id,
+
+                    'unit_id' =>
+                        $context->unit_id,
+
+                    'professional_user_id' =>
+                        $lockedAppointment
+                            ->professional_user_id,
+
+                    'specialty_id' =>
+                        $lockedAppointment
+                            ->schedule
+                            ?->specialty_id,
+
+                    'service_location_id' =>
+                        $lockedAppointment
+                            ->schedule
+                            ?->service_location_id,
+
+                    'status' =>
+                        'in_progress',
+
+                    'started_at' =>
+                        $lockedAppointment->checked_in_at
+                        ?? $completedAt,
+
+                    'reason' =>
+                        $lockedAppointment->reason,
+
+                    'created_by_user_id' =>
+                        $user->id,
+                ]
+            );
+
+            $encounter->update([
+                'status' =>
+                    'completed',
+
+                'completed_at' =>
+                    $completedAt,
+
+                'updated_by_user_id' =>
+                    $user->id,
+
+                'completed_by_user_id' =>
+                    $user->id,
+            ]);
+        }
+    );
+
+    return back()->with(
+        'success',
+        'Atendimento finalizado com sucesso.'
+    );
 }
 
 /**
@@ -755,7 +989,7 @@ public function confirm(
         || $appointment->network_id !== $context->network_id
         || $appointment->unit_id !== $context->unit_id
     ) {
-        abort(403, 'Este agendamento n�o pertence � unidade atual.');
+        abort(403, 'Este agendamento não pertence à unidade atual.');
     }
 
     if ($appointment->status !== 'scheduled') {
@@ -791,13 +1025,13 @@ public function cancel(
         || $appointment->network_id !== $context->network_id
         || $appointment->unit_id !== $context->unit_id
     ) {
-        abort(403, 'Este agendamento não pertence à unidade atual.');
+        abort(403, 'Este agendamento nÃ£o pertence Ã  unidade atual.');
     }
 
     if (! in_array($appointment->status, ['scheduled', 'confirmed'])) {
         return back()->with(
             'error',
-            'Este agendamento não pode mais ser cancelado.'
+            'Este agendamento nÃ£o pode mais ser cancelado.'
         );
     }
 
@@ -828,11 +1062,11 @@ public function reschedule(
         || $appointment->network_id !== $context->network_id
         || $appointment->unit_id !== $context->unit_id
     ) {
-        abort(403, 'Este agendamento não pertence à unidade atual.');
+        abort(403, 'Este agendamento nÃ£o pertence Ã  unidade atual.');
     }
 
     if (! in_array($appointment->status, ['scheduled', 'confirmed'])) {
-        abort(422, 'Este agendamento não pode ser reagendado.');
+        abort(422, 'Este agendamento nÃ£o pode ser reagendado.');
     }
 
     $appointment->load([
@@ -876,13 +1110,13 @@ public function updateSchedule(
         || $appointment->network_id !== $context->network_id
         || $appointment->unit_id !== $context->unit_id
     ) {
-        abort(403, 'Este agendamento não pertence à unidade atual.');
+        abort(403, 'Este agendamento nÃ£o pertence Ã  unidade atual.');
     }
 
     if (! in_array($appointment->status, ['scheduled', 'confirmed'])) {
         return back()->with(
             'error',
-            'Este agendamento não pode ser reagendado.'
+            'Este agendamento nÃ£o pode ser reagendado.'
         );
     }
 
@@ -917,7 +1151,7 @@ public function updateSchedule(
 
     if ($date->dayOfWeek !== (int) $schedule->weekday) {
         throw ValidationException::withMessages([
-            'date' => 'A grade selecionada não possui atendimento neste dia.',
+            'date' => 'A grade selecionada nÃ£o possui atendimento neste dia.',
         ]);
     }
 
@@ -929,7 +1163,7 @@ public function updateSchedule(
         )
     ) {
         throw ValidationException::withMessages([
-            'date' => 'A data está fora da validade desta grade.',
+            'date' => 'A data estÃ¡ fora da validade desta grade.',
         ]);
     }
 
@@ -957,7 +1191,7 @@ public function updateSchedule(
         || $endsAt->gt($scheduleEndsAt)
     ) {
         throw ValidationException::withMessages([
-            'time' => 'O horário está fora da grade selecionada.',
+            'time' => 'O horÃ¡rio estÃ¡ fora da grade selecionada.',
         ]);
     }
 
@@ -971,7 +1205,7 @@ public function updateSchedule(
         || $minutesFromStart % $schedule->slot_duration_minutes !== 0
     ) {
         throw ValidationException::withMessages([
-            'time' => 'O horário não corresponde a um intervalo válido da grade.',
+            'time' => 'O horÃ¡rio nÃ£o corresponde a um intervalo vÃ¡lido da grade.',
         ]);
     }
 
@@ -998,7 +1232,7 @@ public function updateSchedule(
 
         if ($appointmentsAtSlot >= $schedule->slot_capacity) {
             throw ValidationException::withMessages([
-                'time' => 'Este horário não possui mais vagas disponíveis.',
+                'time' => 'Este horÃ¡rio nÃ£o possui mais vagas disponÃ­veis.',
             ]);
         }
 
@@ -1008,7 +1242,7 @@ public function updateSchedule(
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
 
-            // Reagendamento volta para pendente de confirmação.
+            // Reagendamento volta para pendente de confirmaÃ§Ã£o.
             'status' => 'scheduled',
             'confirmed_at' => null,
             'checked_in_at' => null,

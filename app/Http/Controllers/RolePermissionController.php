@@ -16,7 +16,7 @@ use Illuminate\View\View;
 class RolePermissionController extends Controller
 {
     /**
-     * Lista as funções disponíveis e permite selecionar
+     * Lista as funÃ§Ãµes disponÃ­veis e permite selecionar
      * o contexto Rede + Unidade.
      */
     public function index(Request $request): View
@@ -52,13 +52,13 @@ class RolePermissionController extends Controller
             ]);
 
         /*
-         * O Administrador Vitallis é uma função de plataforma.
-         * Não faz sentido aplicar overrides de unidade nele.
+         * O Administrador Vitallis Ã© uma funÃ§Ã£o de plataforma.
+         * NÃ£o faz sentido aplicar overrides de unidade nele.
          *
-         * São exibidas:
-         * - funções globais;
-         * - funções da rede selecionada;
-         * - funções da unidade selecionada.
+         * SÃ£o exibidas:
+         * - funÃ§Ãµes globais;
+         * - funÃ§Ãµes da rede selecionada;
+         * - funÃ§Ãµes da unidade selecionada.
          */
         $roles = Role::query()
             ->where('active', true)
@@ -121,7 +121,7 @@ class RolePermissionController extends Controller
     }
 
     /**
-     * Exibe o formulário para criação de uma função.
+     * Exibe o formulÃ¡rio para criaÃ§Ã£o de uma funÃ§Ã£o.
      */
     public function create(Request $request): View
     {
@@ -173,7 +173,7 @@ class RolePermissionController extends Controller
     }
 
     /**
-     * Cria uma nova função global, de rede ou de unidade.
+     * Cria uma nova funÃ§Ã£o global, de rede ou de unidade.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -229,7 +229,7 @@ class RolePermissionController extends Controller
         ]);
 
         /*
-         * Escopo global não possui rede nem unidade.
+         * Escopo global nÃ£o possui rede nem unidade.
          */
         if ($validated['scope_type'] === 'global') {
             $validated['network_id'] = null;
@@ -244,7 +244,7 @@ class RolePermissionController extends Controller
                 return back()
                     ->withErrors([
                         'network_id' =>
-                            'Selecione a rede desta função.',
+                            'Selecione a rede desta funÃ§Ã£o.',
                     ])
                     ->withInput();
             }
@@ -258,7 +258,7 @@ class RolePermissionController extends Controller
                 return back()
                     ->withErrors([
                         'network_id' =>
-                            'A rede selecionada não está ativa.',
+                            'A rede selecionada nÃ£o estÃ¡ ativa.',
                     ])
                     ->withInput();
             }
@@ -274,7 +274,7 @@ class RolePermissionController extends Controller
                 return back()
                     ->withErrors([
                         'network_id' =>
-                            'Selecione a rede desta função.',
+                            'Selecione a rede desta funÃ§Ã£o.',
                     ])
                     ->withInput();
             }
@@ -283,14 +283,14 @@ class RolePermissionController extends Controller
                 return back()
                     ->withErrors([
                         'unit_id' =>
-                            'Selecione a unidade desta função.',
+                            'Selecione a unidade desta funÃ§Ã£o.',
                     ])
                     ->withInput();
             }
 
             /*
              * A unidade deve estar ativa e pertencer
-             * à rede selecionada.
+             * Ã  rede selecionada.
              */
             $validUnit = Unit::query()
                 ->whereKey($validated['unit_id'])
@@ -312,17 +312,17 @@ class RolePermissionController extends Controller
                 return back()
                     ->withErrors([
                         'unit_id' =>
-                            'A unidade selecionada não pertence à rede informada ou está inativa.',
+                            'A unidade selecionada nÃ£o pertence Ã  rede informada ou estÃ¡ inativa.',
                     ])
                     ->withInput();
             }
         }
 
         /*
-         * Gera o identificador da função.
+         * Gera o identificador da funÃ§Ã£o.
          *
-         * Funções locais recebem o ID do seu escopo para
-         * evitar colisão entre redes e unidades diferentes.
+         * FunÃ§Ãµes locais recebem o ID do seu escopo para
+         * evitar colisÃ£o entre redes e unidades diferentes.
          */
         $informedSlug = trim(
             (string) ($validated['slug'] ?? '')
@@ -354,14 +354,14 @@ class RolePermissionController extends Controller
             return back()
                 ->withErrors([
                     'slug' =>
-                        'Não foi possível gerar um identificador válido para a função.',
+                        'NÃ£o foi possÃ­vel gerar um identificador vÃ¡lido para a funÃ§Ã£o.',
                 ])
                 ->withInput();
         }
 
         /*
-         * O índice único do banco inclui inclusive funções
-         * excluídas logicamente, portanto não reutilizamos slug.
+         * O Ã­ndice Ãºnico do banco inclui inclusive funÃ§Ãµes
+         * excluÃ­das logicamente, portanto nÃ£o reutilizamos slug.
          */
         if (
             Role::withTrashed()
@@ -371,7 +371,7 @@ class RolePermissionController extends Controller
             return back()
                 ->withErrors([
                     'slug' =>
-                        'Já existe uma função com este identificador.',
+                        'JÃ¡ existe uma funÃ§Ã£o com este identificador.',
                 ])
                 ->withInput();
         }
@@ -395,8 +395,8 @@ class RolePermissionController extends Controller
                         $validated['unit_id'] ?? null,
 
                     /*
-                     * Funções criadas pelo painel não são
-                     * funções internas protegidas do Vitallis.
+                     * FunÃ§Ãµes criadas pelo painel nÃ£o sÃ£o
+                     * funÃ§Ãµes internas protegidas do Vitallis.
                      */
                     'system' => false,
                     'active' => true,
@@ -411,7 +411,7 @@ class RolePermissionController extends Controller
         );
 
         /*
-         * Uma função de unidade é aberta diretamente
+         * Uma funÃ§Ã£o de unidade Ã© aberta diretamente
          * na matriz daquela unidade.
          */
         if (
@@ -428,12 +428,12 @@ class RolePermissionController extends Controller
                 )
                 ->with(
                     'success',
-                    'Função criada com sucesso.'
+                    'FunÃ§Ã£o criada com sucesso.'
                 );
         }
 
         /*
-         * Função de rede retorna para a listagem
+         * FunÃ§Ã£o de rede retorna para a listagem
          * filtrada pela respectiva rede.
          */
         if (
@@ -450,7 +450,7 @@ class RolePermissionController extends Controller
                 )
                 ->with(
                     'success',
-                    'Função criada com sucesso.'
+                    'FunÃ§Ã£o criada com sucesso.'
                 );
         }
 
@@ -458,12 +458,12 @@ class RolePermissionController extends Controller
             ->route('roles.index')
             ->with(
                 'success',
-                'Função criada com sucesso.'
+                'FunÃ§Ã£o criada com sucesso.'
             );
     }
 
     /**
-     * Exibe a matriz de permissões da função
+     * Exibe a matriz de permissÃµes da funÃ§Ã£o
      * para uma determinada unidade.
      */
     public function edit(
@@ -491,8 +491,8 @@ class RolePermissionController extends Controller
             ->firstOrFail();
 
         /*
-         * Uma função exclusiva de unidade só poderá
-         * ser configurada em sua própria unidade.
+         * Uma funÃ§Ã£o exclusiva de unidade sÃ³ poderÃ¡
+         * ser configurada em sua prÃ³pria unidade.
          */
         if (
             $role->scope_type === 'unit'
@@ -500,12 +500,12 @@ class RolePermissionController extends Controller
         ) {
             abort(
                 403,
-                'Esta função pertence a outra unidade.'
+                'Esta funÃ§Ã£o pertence a outra unidade.'
             );
         }
 
         /*
-         * Uma função de rede só poderá ser aplicada
+         * Uma funÃ§Ã£o de rede sÃ³ poderÃ¡ ser aplicada
          * em unidades daquela mesma rede.
          */
         if (
@@ -515,12 +515,12 @@ class RolePermissionController extends Controller
         ) {
             abort(
                 403,
-                'Esta função pertence a outra rede.'
+                'Esta funÃ§Ã£o pertence a outra rede.'
             );
         }
 
         /*
-         * IDs das permissões padrão da função.
+         * IDs das permissÃµes padrÃ£o da funÃ§Ã£o.
          */
         $defaultPermissionIds = DB::table(
             'permission_role'
@@ -531,7 +531,7 @@ class RolePermissionController extends Controller
             ->all();
 
         /*
-         * Overrides existentes para esta função
+         * Overrides existentes para esta funÃ§Ã£o
          * especificamente nesta unidade.
          */
         $overrides = DB::table(
@@ -546,7 +546,7 @@ class RolePermissionController extends Controller
             ->keyBy('permission_id');
 
         /*
-         * Todas as permissões disponíveis.
+         * Todas as permissÃµes disponÃ­veis.
          */
         $permissions = Permission::query()
             ->orderBy('slug')
@@ -554,7 +554,7 @@ class RolePermissionController extends Controller
 
         /*
          * Agrupamento visual pelo primeiro segmento
-         * do identificador da permissão.
+         * do identificador da permissÃ£o.
          */
         $permissionGroups = $permissions->groupBy(
             fn (Permission $permission) =>
@@ -575,7 +575,7 @@ class RolePermissionController extends Controller
     }
 
     /**
-     * Salva os overrides da função na unidade.
+     * Salva os overrides da funÃ§Ã£o na unidade.
      *
      * inherit -> remove override
      * allow   -> allowed = true
@@ -620,7 +620,7 @@ class RolePermissionController extends Controller
             );
 
         /*
-         * Protege o escopo da função.
+         * Protege o escopo da funÃ§Ã£o.
          */
         if (
             $role->scope_type === 'unit'
@@ -628,7 +628,7 @@ class RolePermissionController extends Controller
         ) {
             abort(
                 403,
-                'Esta função pertence a outra unidade.'
+                'Esta funÃ§Ã£o pertence a outra unidade.'
             );
         }
 
@@ -639,12 +639,12 @@ class RolePermissionController extends Controller
         ) {
             abort(
                 403,
-                'Esta função pertence a outra rede.'
+                'Esta funÃ§Ã£o pertence a outra rede.'
             );
         }
 
         /*
-         * IDs válidos existentes no banco.
+         * IDs vÃ¡lidos existentes no banco.
          */
         $validPermissionIds = Permission::query()
             ->pluck('id')
@@ -676,12 +676,12 @@ class RolePermissionController extends Controller
                     ) {
                         abort(
                             422,
-                            'Permissão inválida.'
+                            'PermissÃ£o invÃ¡lida.'
                         );
                     }
 
                     /*
-                     * Herdar significa ausência de override.
+                     * Herdar significa ausÃªncia de override.
                      */
                     if ($state === 'inherit') {
                         DB::table(
@@ -706,7 +706,7 @@ class RolePermissionController extends Controller
 
                     /*
                      * Preserva created_at quando o registro
-                     * já existir.
+                     * jÃ¡ existir.
                      */
                     $existingOverride = DB::table(
                         'unit_permission_overrides'
@@ -768,15 +768,15 @@ class RolePermissionController extends Controller
             )
             ->with(
                 'success',
-                'Permissões da função atualizadas para esta unidade.'
+                'PermissÃµes da funÃ§Ã£o atualizadas para esta unidade.'
             );
     }
 
     /**
-     * Atualiza as permissões padrão da função.
+     * Atualiza as permissÃµes padrÃ£o da funÃ§Ã£o.
      *
-     * Estas permissões serão utilizadas quando não existir
-     * override de usuário ou unidade.
+     * Estas permissÃµes serÃ£o utilizadas quando nÃ£o existir
+     * override de usuÃ¡rio ou unidade.
      */
     public function updateDefaults(
         Request $request,
@@ -785,7 +785,7 @@ class RolePermissionController extends Controller
         if ($role->slug === 'vitallis-admin') {
             abort(
                 403,
-                'As permissões globais do Administrador Vitallis não podem ser reduzidas.'
+                'As permissÃµes globais do Administrador Vitallis nÃ£o podem ser reduzidas.'
             );
         }
 
@@ -807,7 +807,7 @@ class RolePermissionController extends Controller
 
         return back()->with(
             'success',
-            'Permissões padrão da função atualizadas.'
+            'PermissÃµes padrÃ£o da funÃ§Ã£o atualizadas.'
         );
     }
 }

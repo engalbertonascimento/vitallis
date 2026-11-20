@@ -1,519 +1,477 @@
 @extends('layouts.app')
 
-@section('title', 'Paciente | Vitallis')
-@section('header', 'Detalhes do paciente')
-@section('subtitle', 'Visualização do cadastro')
+@section('title', $patient->name . ' | Vitallis')
+@section('header', 'Paciente')
+@section('subtitle', 'Prontuário e informações clínicas')
 
 @section('content')
 
-<div class="mx-auto max-w-6xl">
+@php
+    $requestedTab = request('tab', 'summary');
 
-    {{-- CABEÇALHO --}}
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    $availableTabs = [
+        'summary' => [
+            'label' => 'Resumo',
+            'visible' => true,
+        ],
 
-        <div>
-            <a
-                href="{{ route('patients.index') }}"
-                class="text-sm font-medium text-emerald-700 hover:text-emerald-800"
-            >
-                ← Voltar para pacientes
-            </a>
+        'registration' => [
+            'label' => 'Ficha',
+            'visible' => true,
+        ],
 
-            <h1 class="mt-4 text-2xl font-semibold text-slate-900">
-                {{ $patient->name }}
-            </h1>
+        'encounters' => [
+            'label' => 'Atendimentos',
+            'visible' => $tabs['encounters'] ?? false,
+        ],
 
-            @if($patient->social_name)
-                <p class="mt-1 text-sm text-slate-500">
-                    Nome social: {{ $patient->social_name }}
-                </p>
-            @endif
-        </div>
+        'evolutions' => [
+            'label' => 'Evoluções',
+            'visible' => $tabs['evolutions'] ?? false,
+        ],
 
-        <div class="flex gap-2">
-            <a
-                href="{{ route('patients.edit', $patient) }}"
-                class="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
-            >
-                Editar paciente
-            </a>
-        </div>
+        'diagnoses' => [
+            'label' => 'Diagnósticos',
+            'visible' => $tabs['diagnoses'] ?? false,
+        ],
 
-    </div>
+        'prescriptions' => [
+            'label' => 'Prescrições',
+            'visible' => $tabs['prescriptions'] ?? false,
+        ],
+
+        'exams' => [
+            'label' => 'Exames',
+            'visible' => $tabs['exams'] ?? false,
+        ],
+
+        'scales' => [
+            'label' => 'Escalas',
+            'visible' => $tabs['scales'] ?? false,
+        ],
+
+        'documents' => [
+            'label' => 'Documentos',
+            'visible' => $tabs['documents'] ?? false,
+        ],
+
+        'discharge' => [
+            'label' => 'Alta',
+            'visible' => $tabs['discharge'] ?? false,
+        ],
+    ];
+
+    $visibleTabs = collect($availableTabs)
+        ->filter(
+            fn ($tab) => $tab['visible']
+        );
+
+    $activeTab = $visibleTabs->has($requestedTab)
+        ? $requestedTab
+        : 'summary';
+
+    $displayName = $patient->social_name
+        ?: $patient->name;
+
+    $activeTabView = match ($activeTab) {
+        'registration' =>
+            'patients.record.registration',
+
+        'encounters' =>
+            'patients.record.encounters',
+
+        'evolutions' =>
+            'patients.record.evolutions',
+
+        'diagnoses' =>
+            'patients.record.diagnoses',
+
+        'prescriptions' =>
+            'patients.record.prescriptions',
+
+        'exams' =>
+            'patients.record.exams',
+
+        'scales' =>
+            'patients.record.scales',
+
+        'documents' =>
+            'patients.record.documents',
+
+        'discharge' =>
+            'patients.record.discharge',
+
+        default =>
+            'patients.record.summary',
+    };
+@endphp
 
 
-    {{-- STATUS --}}
-    <div class="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+<div class="space-y-6">
 
-        <div class="flex flex-wrap items-center justify-between gap-4">
+    {{-- =========================================================
+         CABEÇALHO FIXO DO PACIENTE
+    ========================================================== --}}
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Situação do cadastro
-                </p>
+        <div class="flex flex-col gap-6 p-6 xl:flex-row xl:items-center xl:justify-between">
 
-                <div class="mt-2">
-                    @if($patient->active)
-                        <span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700">
-                            Ativo
+            <div class="min-w-0">
+
+                <div class="flex flex-wrap items-center gap-3">
+
+                    <h1 class="text-2xl font-semibold text-slate-900">
+                        {{ $displayName }}
+                    </h1>
+
+
+                    @if(! $patient->active)
+
+                        <span class="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+                            Cadastro inativo
                         </span>
-                    @else
-                        <span class="inline-flex rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-700">
-                            Inativo
-                        </span>
+
                     @endif
+
+
+                    @if($activeAppointment)
+
+                        <span class="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-800">
+                            Em atendimento
+                        </span>
+
+                    @endif
+
                 </div>
-            </div>
 
-            <div class="text-right text-sm text-slate-500">
-                <p>
-                    Código do paciente
-                </p>
 
-                <p class="mt-1 font-semibold text-slate-900">
-                    #{{ $patient->id }}
-                </p>
-            </div>
+                @if(
+                    $patient->social_name
+                    && $patient->social_name !== $patient->name
+                )
 
-        </div>
-
-    </div>
-
-
-    {{-- IDENTIFICAÇÃO --}}
-    <div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-
-        <div class="border-b border-slate-200 bg-slate-50 px-6 py-5">
-            <h2 class="font-semibold text-slate-900">
-                Identificação
-            </h2>
-
-            <p class="mt-1 text-sm text-slate-500">
-                Informações cadastrais do paciente.
-            </p>
-        </div>
-
-        <div class="grid grid-cols-1 gap-x-8 gap-y-6 p-6 md:grid-cols-2 lg:grid-cols-3">
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Nome completo
-                </p>
-
-                <p class="mt-1 text-sm font-medium text-slate-900">
-                    {{ $patient->name }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Nome social
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->social_name ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    CPF
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->cpf ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    CNS
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->cns ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Data de nascimento
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    @if($patient->birth_date)
-                        {{ \Carbon\Carbon::parse($patient->birth_date)->format('d/m/Y') }}
-                    @else
-                        Não informado
-                    @endif
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Sexo
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    @switch($patient->sex)
-                        @case('masculino')
-                            Masculino
-                            @break
-
-                        @case('feminino')
-                            Feminino
-                            @break
-
-                        @case('intersexo')
-                            Intersexo
-                            @break
-
-                        @case('nao_informado')
-                            Prefere não informar
-                            @break
-
-                        @default
-                            Não informado
-                    @endswitch
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Nome da mãe
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->mother_name ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Nome do pai
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->father_name ?: 'Não informado' }}
-                </p>
-            </div>
-
-        </div>
-
-    </div>
-
-
-    {{-- CONTATO --}}
-    <div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-
-        <div class="border-b border-slate-200 bg-slate-50 px-6 py-5">
-            <h2 class="font-semibold text-slate-900">
-                Contato
-            </h2>
-        </div>
-
-        <div class="grid grid-cols-1 gap-x-8 gap-y-6 p-6 md:grid-cols-3">
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    E-mail
-                </p>
-
-                <p class="mt-1 break-all text-sm text-slate-700">
-                    {{ $patient->email ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Telefone
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->phone ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Celular
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->mobile_phone ?: 'Não informado' }}
-                </p>
-            </div>
-
-        </div>
-
-    </div>
-
-
-    {{-- ENDEREÇO --}}
-    <div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-
-        <div class="border-b border-slate-200 bg-slate-50 px-6 py-5">
-            <h2 class="font-semibold text-slate-900">
-                Endereço
-            </h2>
-        </div>
-
-        <div class="grid grid-cols-1 gap-x-8 gap-y-6 p-6 md:grid-cols-2 lg:grid-cols-4">
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    CEP
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->postal_code ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div class="lg:col-span-2">
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Logradouro
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->street ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Número
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->number ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Complemento
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->complement ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Bairro
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->district ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Cidade
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->city ?: 'Não informado' }}
-                </p>
-            </div>
-
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    UF
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->state ?: 'Não informado' }}
-                </p>
-            </div>
-
-        </div>
-
-    </div>
-
-
-    {{-- VÍNCULOS ASSISTENCIAIS --}}
-    <div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-
-        <div class="border-b border-slate-200 bg-slate-50 px-6 py-5">
-            <h2 class="font-semibold text-slate-900">
-                Vínculos assistenciais
-            </h2>
-
-            <p class="mt-1 text-sm text-slate-500">
-                Redes às quais este paciente está vinculado.
-            </p>
-        </div>
-
-        <div class="p-6">
-
-            @if($patient->networks->isEmpty())
-
-                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <p class="text-sm text-slate-500">
-                        Nenhum vínculo assistencial encontrado.
+                    <p class="mt-1 text-sm text-slate-500">
+                        Nome civil: {{ $patient->name }}
                     </p>
+
+                @endif
+
+
+                <div class="mt-5 flex flex-wrap gap-x-8 gap-y-4 text-sm">
+
+                    {{-- Nascimento --}}
+                    <div>
+
+                        <p class="text-xs uppercase tracking-wide text-slate-400">
+                            Nascimento
+                        </p>
+
+                        <p class="mt-1 font-medium text-slate-700">
+                            {{ $patient->birth_date?->format('d/m/Y') ?? 'Não informado' }}
+                        </p>
+
+                    </div>
+
+
+                    {{-- CPF --}}
+                    <div>
+
+                        <p class="text-xs uppercase tracking-wide text-slate-400">
+                            CPF
+                        </p>
+
+                        <p class="mt-1 font-medium text-slate-700">
+                            {{ $patient->cpf ?: 'Não informado' }}
+                        </p>
+
+                    </div>
+
+
+                    {{-- CNS --}}
+                    <div>
+
+                        <p class="text-xs uppercase tracking-wide text-slate-400">
+                            CNS
+                        </p>
+
+                        <p class="mt-1 font-medium text-slate-700">
+                            {{ $patient->cns ?: 'Não informado' }}
+                        </p>
+
+                    </div>
+
+
+                    {{-- Sexo --}}
+                    <div>
+
+                        <p class="text-xs uppercase tracking-wide text-slate-400">
+                            Sexo
+                        </p>
+
+                        <p class="mt-1 font-medium text-slate-700">
+                            {{ $patient->sex ?: 'Não informado' }}
+                        </p>
+
+                    </div>
+
+
+                    {{-- Telefone --}}
+                    <div>
+
+                        <p class="text-xs uppercase tracking-wide text-slate-400">
+                            Telefone
+                        </p>
+
+                        <p class="mt-1 font-medium text-slate-700">
+                            {{
+                                $patient->mobile_phone
+                                ?: (
+                                    $patient->phone
+                                    ?: 'Não informado'
+                                )
+                            }}
+                        </p>
+
+                    </div>
+
+
+                    {{-- E-mail --}}
+                    <div>
+
+                        <p class="text-xs uppercase tracking-wide text-slate-400">
+                            E-mail
+                        </p>
+
+                        <p class="mt-1 font-medium text-slate-700">
+                            {{ $patient->email ?: 'Não informado' }}
+                        </p>
+
+                    </div>
+
                 </div>
 
-            @else
+            </div>
 
-                <div class="space-y-3">
 
-                    @foreach($patient->networks as $network)
+            {{-- Modo do prontuário --}}
+            <div class="shrink-0">
 
-                        <div class="flex flex-col gap-3 rounded-lg border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+                @if($canEditClinicalRecord)
 
-                            <div>
-                                <p class="font-medium text-slate-900">
-                                    {{ $network->name }}
-                                </p>
+                    <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4">
 
-                                <p class="mt-1 text-xs text-slate-400">
-                                    Rede #{{ $network->id }}
-                                </p>
-                            </div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                            Prontuário
+                        </p>
 
-                            @if(isset($network->pivot->active))
-                                @if($network->pivot->active)
-                                    <span class="inline-flex self-start rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 sm:self-auto">
-                                        Vínculo ativo
-                                    </span>
-                                @else
-                                    <span class="inline-flex self-start rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 sm:self-auto">
-                                        Vínculo inativo
-                                    </span>
-                                @endif
+                        <p class="mt-1 font-semibold text-emerald-900">
+                            Edição clínica permitida
+                        </p>
+
+                        @if($isResponsibleProfessional)
+
+                            <p class="mt-1 max-w-xs text-xs text-emerald-700">
+                                Você é o profissional responsável pelo atendimento em andamento.
+                            </p>
+
+                        @elseif($canSupervise)
+
+                            <p class="mt-1 max-w-xs text-xs text-emerald-700">
+                                Acesso autorizado por supervisão clínica.
+                            </p>
+
+                        @elseif($canWriteOutsideEncounter)
+
+                            <p class="mt-1 max-w-xs text-xs text-emerald-700">
+                                Alteração fora do período de atendimento autorizada.
+                            </p>
+
+                        @endif
+
+                    </div>
+
+                @else
+
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
+
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            Prontuário
+                        </p>
+
+                        <p class="mt-1 font-semibold text-slate-700">
+                            Modo consulta
+                        </p>
+
+                        <p class="mt-1 max-w-xs text-xs text-slate-500">
+                            As informações clínicas estão disponíveis somente para visualização.
+                        </p>
+
+                    </div>
+
+                @endif
+
+            </div>
+
+        </div>
+
+
+        {{-- =====================================================
+             ATENDIMENTO EM ANDAMENTO
+        ====================================================== --}}
+        @if($activeAppointment)
+
+            <div class="border-t border-violet-200 bg-violet-50 px-6 py-4">
+
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+
+                    <div>
+
+                        <p class="text-xs font-bold uppercase tracking-wide text-violet-600">
+                            Atendimento em andamento
+                        </p>
+
+                        <p class="mt-1 font-semibold text-violet-950">
+
+                            {{
+                                $activeAppointment
+                                    ->schedule
+                                    ?->specialtyRelation
+                                    ?->name
+                                ?? 'Especialidade não informada'
+                            }}
+
+                            <span class="mx-1 text-violet-300">
+                                •
+                            </span>
+
+                            {{ $activeAppointment->starts_at->format('d/m/Y H:i') }}
+
+
+                            @if(
+                                $activeAppointment
+                                    ->schedule
+                                    ?->serviceLocation
+                            )
+
+                                <span class="mx-1 text-violet-300">
+                                    •
+                                </span>
+
+                                {{
+                                    $activeAppointment
+                                        ->schedule
+                                        ->serviceLocation
+                                        ->name
+                                }}
+
                             @endif
 
-                        </div>
-
-                    @endforeach
-
-                </div>
-
-            @endif
-
-        </div>
-
-    </div>
+                        </p>
 
 
-    {{-- USUÁRIOS VINCULADOS --}}
-    <div class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                        @if($activeAppointment->professional)
 
-        <div class="border-b border-slate-200 bg-slate-50 px-6 py-5">
-            <h2 class="font-semibold text-slate-900">
-                Usuários vinculados
-            </h2>
+                            <p class="mt-1 text-sm text-violet-700">
+                                {{ $activeAppointment->professional->name }}
+                            </p>
 
-            <p class="mt-1 text-sm text-slate-500">
-                Contas de acesso relacionadas a este paciente.
-            </p>
-        </div>
+                        @endif
 
-        <div class="p-6">
+                    </div>
 
-            @if($patient->users->isEmpty())
 
-                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <p class="text-sm text-slate-500">
-                        Nenhum usuário vinculado.
-                    </p>
-                </div>
+                    @if($isResponsibleProfessional)
 
-            @else
+                        <span class="w-fit rounded-full bg-violet-700 px-4 py-2 text-xs font-bold text-white">
+                            Atendimento atual
+                        </span>
 
-                <div class="divide-y divide-slate-100">
+                    @elseif($canSupervise)
 
-                    @foreach($patient->users as $user)
+                        <span class="w-fit rounded-full bg-white px-4 py-2 text-xs font-semibold text-violet-700">
+                            Supervisão autorizada
+                        </span>
 
-                        <div class="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
-
-                            <div>
-                                <p class="text-sm font-medium text-slate-900">
-                                    {{ $user->name }}
-                                </p>
-
-                                <p class="text-sm text-slate-500">
-                                    {{ $user->email }}
-                                </p>
-                            </div>
-
-                            @if($user->active)
-                                <span class="inline-flex self-start rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 sm:self-auto">
-                                    Ativo
-                                </span>
-                            @else
-                                <span class="inline-flex self-start rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 sm:self-auto">
-                                    Inativo
-                                </span>
-                            @endif
-
-                        </div>
-
-                    @endforeach
+                    @endif
 
                 </div>
 
-            @endif
-
-        </div>
-
-    </div>
-
-
-    {{-- INFORMAÇÕES DO REGISTRO --}}
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-
-        <div class="border-b border-slate-200 bg-slate-50 px-6 py-5">
-            <h2 class="font-semibold text-slate-900">
-                Informações do registro
-            </h2>
-        </div>
-
-        <div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
-
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Cadastrado em
-                </p>
-
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->created_at?->format('d/m/Y H:i') ?? 'Não informado' }}
-                </p>
             </div>
 
-            <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Última atualização
-                </p>
+        @endif
 
-                <p class="mt-1 text-sm text-slate-700">
-                    {{ $patient->updated_at?->format('d/m/Y H:i') ?? 'Não informado' }}
-                </p>
-            </div>
+    </section>
+
+
+    {{-- =========================================================
+         FICHÁRIO
+    ========================================================== --}}
+    <section>
+
+        {{-- Orelhas --}}
+        <div class="flex gap-1 overflow-x-auto px-2 pt-2">
+
+            @foreach($visibleTabs as $tabKey => $tab)
+
+                <a
+                    href="{{ route('patients.show', [
+                        'patient' => $patient->id,
+                        'tab' => $tabKey,
+                    ]) }}"
+                    class="
+                        relative whitespace-nowrap rounded-t-xl border px-4 py-3 text-sm font-semibold transition
+
+                        {{
+                            $activeTab === $tabKey
+                                ? 'z-10 -mb-px border-slate-300 border-b-white bg-white text-emerald-800 shadow-sm'
+                                : 'border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800'
+                        }}
+                    "
+                >
+                    {{ $tab['label'] }}
+
+                    @if(
+                        $tabKey === 'encounters'
+                        && $activeAppointment
+                    )
+
+                        <span class="ml-1 inline-block h-2 w-2 rounded-full bg-violet-600"></span>
+
+                    @endif
+
+                </a>
+
+            @endforeach
 
         </div>
 
-    </div>
+
+        {{-- Folha selecionada --}}
+        <div class="min-h-[520px] rounded-b-2xl rounded-tr-2xl border border-slate-300 bg-white shadow-sm">
+
+            @include($activeTabView, [
+                'tabLabel' =>
+                    $availableTabs[$activeTab]['label'],
+
+                'patient' =>
+                    $patient,
+
+                'activeAppointment' =>
+                    $activeAppointment,
+
+                'isResponsibleProfessional' =>
+                    $isResponsibleProfessional,
+
+                'canEditClinicalRecord' =>
+                    $canEditClinicalRecord,
+
+                'recordMode' =>
+                    $recordMode,
+            ])
+
+        </div>
+
+    </section>
 
 </div>
 

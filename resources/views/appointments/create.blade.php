@@ -9,7 +9,7 @@
 <div class="mx-auto max-w-5xl space-y-6">
 
     {{-- =========================================================
-         CABE«ALHO
+         CABE√áALHO
     ========================================================== --}}
     <div>
 
@@ -25,7 +25,7 @@
         </h1>
 
         <p class="mt-1 text-sm text-slate-500">
-            Selecione o paciente e um hor·rio pertencente a uma agenda disponÌvel.
+            Selecione o paciente e um hor√°rio pertencente a uma agenda dispon√≠vel.
         </p>
 
     </div>
@@ -39,7 +39,7 @@
         <div class="rounded-xl border border-red-200 bg-red-50 p-5">
 
             <p class="font-medium text-red-800">
-                N„o foi possÌvel criar o agendamento.
+                N√£o foi poss√≠vel criar o agendamento.
             </p>
 
             <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-red-700">
@@ -90,7 +90,7 @@
 
         <p class="mt-3 text-xs text-emerald-700">
             Para realizar o agendamento em outra unidade, altere primeiro
-            a unidade de trabalho no cabeÁalho do Vitallis.
+            a unidade de trabalho no cabe√ßalho do Vitallis.
         </p>
 
     </section>
@@ -104,11 +104,11 @@
         <section class="rounded-xl border border-amber-200 bg-amber-50 p-6">
 
             <h2 class="font-semibold text-amber-900">
-                Nenhuma agenda disponÌvel
+                Nenhuma agenda dispon√≠vel
             </h2>
 
             <p class="mt-2 text-sm leading-relaxed text-amber-700">
-                N„o existem grades de atendimento ativas cadastradas
+                N√£o existem grades de atendimento ativas cadastradas
                 para esta unidade.
             </p>
 
@@ -116,14 +116,14 @@
             @if(auth()->user()->hasPermission('schedules.create'))
 
                 <p class="mt-3 text-sm font-medium text-amber-800">
-                    Seu perfil possui permiss„o para criar grades de agenda.
+                    Seu perfil possui permiss√£o para criar grades de agenda.
                 </p>
 
             @else
 
                 <p class="mt-3 text-sm text-amber-700">
-                    Procure o respons·vel pela administraÁ„o das agendas
-                    da unidade para disponibilizar hor·rios.
+                    Procure o respons√°vel pela administra√ß√£o das agendas
+                    da unidade para disponibilizar hor√°rios.
                 </p>
 
             @endif
@@ -133,7 +133,7 @@
     @else
 
         {{-- =====================================================
-             FORMUL¡RIO
+             FORMUL√ÅRIO
         ====================================================== --}}
         <form
             method="POST"
@@ -156,7 +156,7 @@
                     </h2>
 
                     <p class="mt-1 text-sm text-slate-500">
-                        Selecione o paciente que receber· o atendimento.
+                        Selecione o paciente que receber√° o atendimento.
                     </p>
 
                 </div>
@@ -169,7 +169,7 @@
                         <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
 
                             <p class="text-sm font-medium text-amber-900">
-                                Nenhum paciente disponÌvel nesta rede.
+                                Nenhum paciente dispon√≠vel nesta rede.
                             </p>
 
                             @if(auth()->user()->hasPermission('patients.create'))
@@ -301,7 +301,7 @@
                                 @if($schedule->professional)
                                     {{ $schedule->professional->name }}
                                 @else
-                                    Profissional n„o identificado
+                                    Profissional n√£o identificado
                                 @endif
 
                                 @if($schedule->specialty)
@@ -313,7 +313,7 @@
                                 @endif
 
                                 ({{ substr($schedule->starts_at, 0, 5) }}
-                                ‡s
+                                √†s
                                 {{ substr($schedule->ends_at, 0, 5) }})
 
                             </option>
@@ -329,14 +329,14 @@
                     @enderror
 
 
-                    {{-- InformaÁıes da grade --}}
+                    {{-- Informa√ß√µes da grade --}}
                     <div
                         id="schedule-info"
                         class="mt-4 hidden rounded-lg border border-blue-100 bg-blue-50 p-4"
                     >
 
                         <p class="text-sm font-medium text-blue-900">
-                            InformaÁıes da agenda
+                            Informa√ß√µes da agenda
                         </p>
 
                         <p
@@ -352,18 +352,18 @@
 
 
             {{-- =================================================
-                 DATA E HOR¡RIO
+                 DATA E HOR√ÅRIO
             ================================================== --}}
             <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-200 px-6 py-5">
 
                     <h2 class="font-semibold text-slate-900">
-                        Data e hor·rio
+                        Data e hor√°rio
                     </h2>
 
                     <p class="mt-1 text-sm text-slate-500">
-                        O hor·rio deve corresponder ‡ grade selecionada.
+                        O hor√°rio deve corresponder √† grade selecionada.
                     </p>
 
                 </div>
@@ -400,14 +400,14 @@
                     </div>
 
 
-                    {{-- Hor·rio --}}
+                    {{-- Hor√°rio --}}
                     <div>
 
                         <label
                             for="time"
                             class="mb-2 block text-sm font-medium text-slate-700"
                         >
-                            Hor·rio *
+                            Hor√°rio *
                         </label>
 
                         <select
@@ -428,7 +428,7 @@
                             id="time-help"
                             class="mt-2 text-xs text-slate-400"
                         >
-                            Os hor·rios s„o definidos pela grade da agenda.
+                            Os hor√°rios s√£o definidos pela grade da agenda.
                         </p>
 
                         @error('time')
@@ -452,11 +452,11 @@
                 <div class="border-b border-slate-200 px-6 py-5">
 
                     <h2 class="font-semibold text-slate-900">
-                        InformaÁıes administrativas
+                        Informa√ß√µes administrativas
                     </h2>
 
                     <p class="mt-1 text-sm text-slate-500">
-                        Essas informaÁıes pertencem ao agendamento e n„o ao prontu·rio clÌnico.
+                        Essas informa√ß√µes pertencem ao agendamento e n√£o ao prontu√°rio cl√≠nico.
                     </p>
 
                 </div>
@@ -479,7 +479,7 @@
                             type="text"
                             maxlength="255"
                             value="{{ old('reason') }}"
-                            placeholder="Ex.: Consulta cardiolÛgica"
+                            placeholder="Ex.: Consulta cardiol√≥gica"
                             class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                         >
 
@@ -498,7 +498,7 @@
                             for="administrative_notes"
                             class="mb-2 block text-sm font-medium text-slate-700"
                         >
-                            ObservaÁıes administrativas
+                            Observa√ß√µes administrativas
                         </label>
 
                         <textarea
@@ -506,12 +506,12 @@
                             name="administrative_notes"
                             rows="4"
                             maxlength="5000"
-                            placeholder="InformaÁıes administrativas relacionadas ao agendamento."
+                            placeholder="Informa√ß√µes administrativas relacionadas ao agendamento."
                             class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                         >{{ old('administrative_notes') }}</textarea>
 
                         <p class="mt-2 text-xs text-slate-400">
-                            N„o utilize este campo para registro de informaÁıes clÌnicas.
+                            N√£o utilize este campo para registro de informa√ß√µes cl√≠nicas.
                         </p>
 
                         @error('administrative_notes')
@@ -528,7 +528,7 @@
 
 
             {{-- =================================================
-                 CONFIRMA«√O
+                 CONFIRMA√á√ÉO
             ================================================== --}}
             <div class="sticky bottom-4 z-20">
 
@@ -541,7 +541,7 @@
                         </p>
 
                         <p class="mt-1 text-xs text-slate-500">
-                            O backend validar· novamente disponibilidade, capacidade e contexto da unidade.
+                            O backend validar√° novamente disponibilidade, capacidade e contexto da unidade.
                         </p>
 
                     </div>
@@ -578,7 +578,7 @@
 
 
 {{-- =========================================================
-     HOR¡RIOS DA GRADE
+     HOR√ÅRIOS DA GRADE
 ========================================================== --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -725,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         /*
          * JavaScript:
-         * domingo = 0 ... s·bado = 6
+         * domingo = 0 ... s√°bado = 6
          */
         const selectedDate =
             new Date(date + 'T12:00:00');
@@ -753,7 +753,7 @@ document.addEventListener('DOMContentLoaded', function () {
             invalidDay.value = '';
 
             invalidDay.textContent =
-                'A agenda n„o atende neste dia';
+                'A agenda n√£o atende neste dia';
 
             timeSelect.appendChild(
                 invalidDay
@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', function () {
             invalidPeriod.value = '';
 
             invalidPeriod.textContent =
-                'Data anterior ao inÌcio da agenda';
+                'Data anterior ao in√≠cio da agenda';
 
             timeSelect.appendChild(
                 invalidPeriod
@@ -855,7 +855,7 @@ document.addEventListener('DOMContentLoaded', function () {
         placeholder.value = '';
 
         placeholder.textContent =
-            'Selecione o hor·rio';
+            'Selecione o hor√°rio';
 
         timeSelect.appendChild(
             placeholder
@@ -894,7 +894,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (timeHelp) {
             timeHelp.textContent =
-                'Os hor·rios acima pertencem ‡ grade selecionada. A disponibilidade ser· confirmada ao salvar.';
+                'Os hor√°rios acima pertencem √† grade selecionada. A disponibilidade ser√° confirmada ao salvar.';
         }
     }
 

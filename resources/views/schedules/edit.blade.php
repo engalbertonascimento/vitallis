@@ -2,13 +2,13 @@
 
 @section('title', 'Editar Grade | Vitallis')
 @section('header', 'Editar grade')
-@section('subtitle', 'AtualizaÁ„o da disponibilidade para atendimento')
+@section('subtitle', 'Atualiza√ß√£o da disponibilidade para atendimento')
 
 @section('content')
 
 <div class="mx-auto max-w-5xl space-y-6">
 
-    {{-- CabeÁalho --}}
+    {{-- Cabe√ßalho --}}
     <div>
 
         <a
@@ -23,7 +23,7 @@
         </h1>
 
         <p class="mt-1 text-sm text-slate-500">
-            Atualize o profissional, especialidade, local e hor·rios desta grade.
+            Atualize o profissional, especialidade, local e hor√°rios desta grade.
         </p>
 
     </div>
@@ -71,7 +71,7 @@
         @endif
 
         <p class="mt-3 text-xs text-emerald-700">
-            Esta grade pertence ‡ unidade atualmente selecionada.
+            Esta grade pertence √† unidade atualmente selecionada.
         </p>
 
     </section>
@@ -172,12 +172,12 @@
                         type="text"
                         maxlength="255"
                         value="{{ old('name', $schedule->name) }}"
-                        placeholder="Ex.: AmbulatÛrio de Cardiologia"
+                        placeholder="Ex.: Ambulat√≥rio de Cardiologia"
                         class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                     >
 
                     <p class="mt-2 text-xs text-slate-400">
-                        O nome È livre. A especialidade e o local s„o dados padronizados.
+                        O nome √© livre. A especialidade e o local s√£o dados padronizados.
                     </p>
 
                     @error('name')
@@ -305,13 +305,13 @@
         </section>
 
 
-        {{-- PerÌodo --}}
+        {{-- Per√≠odo --}}
         <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
 
             <div class="border-b border-slate-200 px-6 py-5">
 
                 <h2 class="font-semibold text-slate-900">
-                    PerÌodo e recorrÍncia
+                    Per√≠odo e recorr√™ncia
                 </h2>
 
                 <p class="mt-1 text-sm text-slate-500">
@@ -323,14 +323,14 @@
 
             <div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-3">
 
-                {{-- InÌcio --}}
+                {{-- In√≠cio --}}
                 <div>
 
                     <label
                         for="starts_on"
                         class="mb-2 block text-sm font-medium text-slate-700"
                     >
-                        InÌcio da validade *
+                        In√≠cio da validade *
                     </label>
 
                     <input
@@ -401,11 +401,11 @@
                     @php
                         $weekdays = [
                             1 => 'Segunda-feira',
-                            2 => 'TerÁa-feira',
+                            2 => 'Ter√ßa-feira',
                             3 => 'Quarta-feira',
                             4 => 'Quinta-feira',
                             5 => 'Sexta-feira',
-                            6 => 'S·bado',
+                            6 => 'S√°bado',
                             0 => 'Domingo',
                         ];
                     @endphp
@@ -450,17 +450,17 @@
         </section>
 
 
-        {{-- Hor·rios --}}
+        {{-- Hor√°rios --}}
         <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
 
             <div class="border-b border-slate-200 px-6 py-5">
 
                 <h2 class="font-semibold text-slate-900">
-                    Hor·rios
+                    Hor√°rios
                 </h2>
 
                 <p class="mt-1 text-sm text-slate-500">
-                    PerÌodo di·rio e capacidade da grade.
+                    Per√≠odo di√°rio e capacidade da grade.
                 </p>
 
             </div>
@@ -468,14 +468,14 @@
 
             <div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-4">
 
-                {{-- InÌcio --}}
+                {{-- In√≠cio --}}
                 <div>
 
                     <label
                         for="starts_at"
                         class="mb-2 block text-sm font-medium text-slate-700"
                     >
-                        InÌcio *
+                        In√≠cio *
                     </label>
 
                     <input
@@ -499,14 +499,14 @@
                 </div>
 
 
-                {{-- TÈrmino --}}
+                {{-- T√©rmino --}}
                 <div>
 
                     <label
                         for="ends_at"
                         class="mb-2 block text-sm font-medium text-slate-700"
                     >
-                        TÈrmino *
+                        T√©rmino *
                     </label>
 
                     <input
@@ -530,14 +530,14 @@
                 </div>
 
 
-                {{-- DuraÁ„o --}}
+                {{-- Dura√ß√£o --}}
                 <div>
 
                     <label
                         for="slot_duration_minutes"
                         class="mb-2 block text-sm font-medium text-slate-700"
                     >
-                        DuraÁ„o *
+                        Dura√ß√£o *
                     </label>
 
                     <select
@@ -599,7 +599,7 @@
                     >
 
                     <p class="mt-2 text-xs text-slate-400">
-                        Pacientes permitidos por hor·rio.
+                        Pacientes permitidos por hor√°rio.
                     </p>
 
                     @error('slot_capacity')
@@ -613,18 +613,18 @@
             </div>
 
 
-            {{-- PrÈvia --}}
+            {{-- Pr√©via --}}
             <div class="border-t border-slate-200 bg-blue-50 px-6 py-5">
 
                 <p class="text-sm font-medium text-blue-900">
-                    PrÈvia dos hor·rios
+                    Pr√©via dos hor√°rios
                 </p>
 
                 <p
                     id="schedule-preview"
                     class="mt-2 text-sm leading-relaxed text-blue-700"
                 >
-                    Configure o perÌodo para visualizar os hor·rios.
+                    Configure o per√≠odo para visualizar os hor√°rios.
                 </p>
 
             </div>
@@ -632,7 +632,7 @@
         </section>
 
 
-        {{-- InformaÁıes da grade --}}
+        {{-- Informa√ß√µes da grade --}}
         <section class="rounded-xl border border-slate-200 bg-slate-50 p-5">
 
             <div class="flex flex-wrap gap-x-8 gap-y-3 text-sm">
@@ -662,7 +662,7 @@
         </section>
 
 
-        {{-- RodapÈ --}}
+        {{-- Rodap√© --}}
         <div class="sticky bottom-4 z-20">
 
             <div class="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
@@ -670,11 +670,11 @@
                 <div>
 
                     <p class="text-sm font-medium text-slate-900">
-                        Salvar alteraÁıes
+                        Salvar altera√ß√µes
                     </p>
 
                     <p class="mt-1 text-xs text-slate-500">
-                        As alteraÁıes afetar„o a disponibilidade futura desta grade.
+                        As altera√ß√µes afetar√£o a disponibilidade futura desta grade.
                     </p>
 
                 </div>
@@ -693,7 +693,7 @@
                         type="submit"
                         class="inline-flex justify-center rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
                     >
-                        Salvar alteraÁıes
+                        Salvar altera√ß√µes
                     </button>
 
                 </div>
@@ -783,7 +783,7 @@ document.addEventListener('DOMContentLoaded', function () {
             end <= start
         ) {
             preview.textContent =
-                'Informe um perÌodo e uma duraÁ„o v·lidos.';
+                'Informe um per√≠odo e uma dura√ß√£o v√°lidos.';
 
             return;
         }
@@ -802,7 +802,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!slots.length) {
             preview.textContent =
-                'O perÌodo informado n„o comporta nenhum hor·rio com essa duraÁ„o.';
+                'O per√≠odo informado n√£o comporta nenhum hor√°rio com essa dura√ß√£o.';
 
             return;
         }
@@ -811,8 +811,8 @@ document.addEventListener('DOMContentLoaded', function () {
             slots.length
             + (
                 slots.length === 1
-                    ? ' hor·rio: '
-                    : ' hor·rios: '
+                    ? ' hor√°rio: '
+                    : ' hor√°rios: '
             )
             + slots.join(', ');
     }
